@@ -1,0 +1,43 @@
+import { createNestConfig } from "@bratislava/eslint-config-nest";
+
+const config = createNestConfig({
+  tsconfigRootDir: import.meta.dirname,
+});
+
+// Flatten any nested arrays in the config (workaround for @eslint/markdown nested array issue)
+const flattenedConfig = config.flat(Infinity);
+
+const errorRuleOverrides = {};
+
+const removedRuleIds = new Set();
+
+const overriddenConfig = flattenedConfig.map((entry) => {
+  if (!entry.rules) {
+    return entry;
+  }
+
+  const rules = { ...entry.rules };
+
+  for (const ruleId of removedRuleIds) {
+    if (ruleId in rules) {
+      delete rules[ruleId];
+    }
+  }
+
+  for (const [ruleId, level] of Object.entries(errorRuleOverrides)) {
+    if (ruleId in rules) {
+      rules[ruleId] = level;
+    }
+  }
+
+  return {
+    ...entry,
+    rules,
+  };
+});
+
+export default [
+  // Generated Prisma client and build artifacts are never linted.
+  { ignores: ["src/generated/**", "dist/**", "node_modules/**", "coverage/**"] },
+  ...overriddenConfig,
+];

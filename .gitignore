@@ -1,0 +1,12 @@
+# Conductor workspace context
+.context/
+
+# OS
+.DS_Store
+
+# IDEs and editors
+.idea/
+.vscode/
+
+# Local agent settings
+.claude/settings.local.json

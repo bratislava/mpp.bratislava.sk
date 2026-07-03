@@ -1,0 +1,21 @@
+.gitignore
+.git
+.dockerignore
+*Dockerfile*
+*docker-compose*
+dist
+node_modules
+npm-debug.log
+**/*.env
+**/*.env.example
+**/*.env.test
+misc
+.idea
+.nvmrc
+.vscode
+**/*.bacpac
+**/*.csv
+# bratiska-cli manifest files
+manifest-*.y?ml
+*.pem
+*.md

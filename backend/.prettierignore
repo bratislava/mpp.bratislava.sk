@@ -1,0 +1,7 @@
+# Generated Prisma client
+src/generated
+
+# Build output / deps
+dist
+node_modules
+coverage
