@@ -17,7 +17,7 @@ jobs:
     secrets: inherit
     with:
       directory: backend/
-      image: harbor.bratislava.sk/mpp/backend
+      image: harbor.bratislava.sk/portfolio/mpp/backend
       target_unit_test: test
       target_lint: lint
       target_e2e_test: e2e
@@ -28,5 +28,5 @@ jobs:
     secrets: inherit
     with:
       directory: frontend/
-      image: harbor.bratislava.sk/mpp/frontend
+      image: harbor.bratislava.sk/portfolio/mpp/frontend
       build_env: staging

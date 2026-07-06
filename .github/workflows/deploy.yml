@@ -99,7 +99,7 @@ jobs:
     secrets: inherit
     with:
       directory: backend/
-      image: harbor.bratislava.sk/mpp/backend
+      image: harbor.bratislava.sk/portfolio/mpp/backend
       cluster: ${{ needs.resolve.outputs.cluster }}
       # Deploy gate: unit tests only (no lint/e2e — those run on PRs).
       target_unit_test: test
@@ -112,7 +112,7 @@ jobs:
     secrets: inherit
     with:
       directory: frontend/
-      image: harbor.bratislava.sk/mpp/frontend
+      image: harbor.bratislava.sk/portfolio/mpp/frontend
       cluster: ${{ needs.resolve.outputs.cluster }}
       build_env: ${{ needs.resolve.outputs.frontend-build-env }}
 
