@@ -1,0 +1,141 @@
+# TODO: deploys will fail until a terragrunt deployment module is prepared
+# in bratislava/infrastructure-deployment-configuration under
+# clusters/<cluster>/applications/mpp/<service> for each service on each
+# target cluster, and the INFRA_DEPLOY_PAT secret + development/staging/
+# production environments are configured.
+name: Deploy pipeline
+on:
+  push:
+    tags:
+      - "dev**"
+      - "staging**"
+      - "prod**"
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve Environment and Services
+    runs-on: bratislava
+    outputs:
+      cluster: ${{ steps.resolve.outputs.cluster }}
+      frontend-build-env: ${{ steps.resolve.outputs.frontend-build-env }}
+      backend: ${{ steps.resolve.outputs.backend }}
+      frontend: ${{ steps.resolve.outputs.frontend }}
+    steps:
+      - name: Map ref to environment and services
+        id: resolve
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [[ "$REF" == "refs/heads/master" ]]; then
+            CLUSTER="staging"
+            ONLY="all"
+          elif [[ "$REF" == refs/tags/* ]]; then
+            TAG="${REF#refs/tags/}"
+            case "$TAG" in
+              dev*)     CLUSTER="development"; REST="${TAG#dev}" ;;
+              staging*) CLUSTER="staging";     REST="${TAG#staging}" ;;
+              prod*)    CLUSTER="production";  REST="${TAG#prod}" ;;
+              *)
+                echo "::error::Unable to determine environment from tag: $TAG"
+                exit 1
+                ;;
+            esac
+
+            # A bare environment tag (e.g. dev123) deploys the whole project,
+            # a service-suffixed tag (e.g. dev-backend123) deploys only that
+            # service. Note: an unknown/mistyped suffix (e.g. dev-fronted123)
+            # falls through to "all" and deploys both services.
+            case "$REST" in
+              -backend*)  ONLY="backend" ;;
+              -frontend*) ONLY="frontend" ;;
+              *)          ONLY="all" ;;
+            esac
+          else
+            echo "::error::Unable to determine environment from ref: $REF"
+            exit 1
+          fi
+
+          case "$CLUSTER" in
+            development) FRONTEND_BUILD_ENV="dev" ;;
+            staging)     FRONTEND_BUILD_ENV="staging" ;;
+            production)  FRONTEND_BUILD_ENV="prod" ;;
+          esac
+
+          {
+            echo "cluster=$CLUSTER"
+            echo "frontend-build-env=$FRONTEND_BUILD_ENV"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Pipeline info :rocket:"
+            echo ":arrow_right: Ref: **$REF**"
+            echo ":arrow_right: Cluster: **$CLUSTER**"
+            echo "### We are going to deploy :ship:"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for SVC in backend frontend; do
+            if [[ "$ONLY" == "all" || "$ONLY" == "$SVC" ]]; then
+              echo "$SVC=true" >> "$GITHUB_OUTPUT"
+              echo ":soon: **$SVC**" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "$SVC=false" >> "$GITHUB_OUTPUT"
+            fi
+          done
+
+  # ---- Build & push per-cluster service images ----
+  # Each build job builds the deployable image, pushes it, and re-tags it for
+  # the cluster. The matching deploy-* job below then triggers the infra deploy.
+
+  build-backend:
+    name: Build backend
+    needs: resolve
+    if: needs.resolve.outputs.backend == 'true'
+    uses: ./.github/workflows/build-backend.yml
+    secrets: inherit
+    with:
+      directory: backend/
+      image: harbor.bratislava.sk/portfolio/mpp/backend
+      cluster: ${{ needs.resolve.outputs.cluster }}
+      # Deploy gate: unit tests only (no lint/e2e — those run on PRs).
+      target_unit_test: test
+
+  build-frontend:
+    name: Build frontend
+    needs: resolve
+    if: ${{ !failure() && !cancelled() && needs.resolve.outputs.frontend == 'true' }}
+    uses: ./.github/workflows/build-frontend.yml
+    secrets: inherit
+    with:
+      directory: frontend/
+      image: harbor.bratislava.sk/portfolio/mpp/frontend
+      cluster: ${{ needs.resolve.outputs.cluster }}
+      build_env: ${{ needs.resolve.outputs.frontend-build-env }}
+
+  # ---- Trigger infrastructure deploys ----
+  # Both images must be built before the first deploy starts. Then backend
+  # deploys first, followed by the frontend (which talks to it).
+
+  deploy-backend:
+    name: backend
+    needs: [resolve, build-backend, build-frontend]
+    if: ${{ !failure() && !cancelled() && needs.resolve.outputs.backend == 'true' }}
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@beta
+    secrets: inherit
+    with:
+      cluster: ${{ needs.resolve.outputs.cluster }}
+      app: mpp/backend
+
+  deploy-frontend:
+    name: frontend
+    needs: [resolve, build-frontend, deploy-backend]
+    if: ${{ !failure() && !cancelled() && needs.resolve.outputs.frontend == 'true' }}
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@beta
+    secrets: inherit
+    with:
+      cluster: ${{ needs.resolve.outputs.cluster }}
+      app: mpp/frontend

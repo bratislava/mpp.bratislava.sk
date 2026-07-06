@@ -1,0 +1,19 @@
+# Conductor workspace context
+.context/
+
+# OS
+.DS_Store
+
+# IDEs and editors
+.idea/
+.vscode/
+
+# Local agent settings
+.claude/settings.local.json
+
+# Track the gstack team-mode shim (settings + hook), not the skill tree —
+# each dev installs gstack globally via `./setup --team`
+!.claude
+!.claude/settings.json
+!.claude/hooks/
+.claude/skills/
