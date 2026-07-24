@@ -56,5 +56,12 @@
     "supertest": "^7.0.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "find-my-way": "^9.7.0",
+    "js-yaml": "^4.3.0",
+    "minimatch": "^9.0.9",
+    "multer": "^2.2.0",
+    "picomatch": "^4.0.5"
   }
 }
