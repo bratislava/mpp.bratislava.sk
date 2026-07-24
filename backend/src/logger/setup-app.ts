@@ -1,8 +1,8 @@
 import { expressLogger, type ExpressRequest } from '@logtape/express'
 import type { INestApplication } from '@nestjs/common'
 
-import { AllExceptionsFilter } from './all-exceptions.filter'
-import { correlationIdMiddleware } from './correlation-id.middleware'
+import { AllExceptionsFilter } from './all-exceptions.filter.js'
+import { correlationIdMiddleware } from './correlation-id.middleware.js'
 
 /**
  * The ONE logging wiring path — called by main.ts in production and by the

@@ -1,7 +1,7 @@
 import { getLogger, type Logger } from '@logtape/logtape'
-import { AppError } from 'src/utils/errors'
 
-import { escapeMessageTemplate } from './logtape.config'
+import { AppError } from '../utils/errors.js'
+import { escapeMessageTemplate } from './logtape.config.js'
 
 /**
  * THE one place errors become log lines — used by AllExceptionsFilter for

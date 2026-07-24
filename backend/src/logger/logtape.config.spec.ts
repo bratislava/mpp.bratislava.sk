@@ -1,6 +1,6 @@
 import type { LogRecord } from '@logtape/logtape'
 
-import { buildLogFormatter, escapeLogText, formatLogValue } from './logtape.config'
+import { buildLogFormatter, escapeLogText, formatLogValue } from './logtape.config.js'
 
 function makeRecord(overrides: Partial<LogRecord> = {}): LogRecord {
   return {
