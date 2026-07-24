@@ -128,7 +128,8 @@ jobs:
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
-      app: mpp/backend
+      app: mpp.bratislava.sk/backend
+      dispatch_ref: mpinter/mpp-bratislava-sk-app
 
   deploy-frontend:
     name: frontend
@@ -138,4 +139,5 @@ jobs:
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
-      app: mpp/frontend
+      app: mpp.bratislava.sk/frontend
+      dispatch_ref: mpinter/mpp-bratislava-sk-app
