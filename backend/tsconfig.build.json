@@ -1,4 +1,17 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "compilerOptions": {
+    // pin the dist/src layout: without root-level files in the program,
+    // rootDir inference would flatten output to dist/ and break start:prod
+    "rootDir": "./"
+  },
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts",
+    "vitest.config.ts",
+    "vitest.config.e2e.ts",
+    "prisma.config.ts"
+  ]
 }
