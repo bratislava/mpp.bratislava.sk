@@ -2,19 +2,19 @@
 import { getLogger, type LogRecord, reset } from '@logtape/logtape'
 import { Body, Controller, Get, INestApplication, Post } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { createZodDto } from 'nestjs-zod'
-import * as request from 'supertest'
+import request from 'supertest'
 import { z } from 'zod'
 
-import AppModule from '../src/app.module'
-import { setupApp } from '../src/logger/setup-app'
-import { configureTestLogging } from '../src/logger/test-sink'
-import PrismaService from '../src/prisma/prisma.service'
-import { UpstreamServiceError } from '../src/utils/errors'
+import AppModule from '../src/app.module.js'
+import { setupApp } from '../src/logger/setup-app.js'
+import { configureTestLogging } from '../src/logger/test-sink.js'
+import PrismaService from '../src/prisma/prisma.service.js'
+import { UpstreamServiceError } from '../src/utils/errors.js'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
-class CreateThingDto extends createZodDto(z.object({ name: z.string() })) {}
+const createThingSchema = z.object({ name: z.string() })
+type CreateThing = z.infer<typeof createThingSchema>
 
 @Controller('test-logging')
 class TestLoggingController {
@@ -47,7 +47,7 @@ class TestLoggingController {
   }
 
   @Post('validate')
-  validate(@Body() body: CreateThingDto): CreateThingDto {
+  validate(@Body({ schema: createThingSchema }) body: CreateThing): CreateThing {
     return body
   }
 }
@@ -154,6 +154,11 @@ describe('Logging (e2e)', () => {
     expect(errorRecord?.level).toBe('error')
     expect(errorRecord?.properties.details).toEqual({ upstreamStatus: 504 })
     expect(errorRecord?.properties.error).toBeUndefined()
+  })
+
+  it('passes valid bodies through the schema pipe unchanged', async () => {
+    const response = await request(server()).post('/test-logging/validate').send({ name: 'ok' }).expect(201)
+    expect(response.body).toEqual({ name: 'ok' })
   })
 
   it('keeps field-level issues in Zod 400 bodies (regression guard)', async () => {

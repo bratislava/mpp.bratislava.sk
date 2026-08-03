@@ -1,8 +1,8 @@
 import { getLogger, type LogRecord, reset } from '@logtape/logtape'
-import { AppError, UpstreamServiceError } from 'src/utils/errors'
 
-import { logError } from './log-error'
-import { configureTestLogging } from './test-sink'
+import { AppError, UpstreamServiceError } from '../utils/errors.js'
+import { logError } from './log-error.js'
+import { configureTestLogging } from './test-sink.js'
 
 describe('logError', () => {
   const records: LogRecord[] = []

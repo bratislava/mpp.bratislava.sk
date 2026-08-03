@@ -1,4 +1,4 @@
-import { prismaEventToLog } from './prisma-event-to-log'
+import { prismaEventToLog } from './prisma-event-to-log.js'
 
 describe('prismaEventToLog', () => {
   it('maps query events to debug with duration and target, never bound params', () => {

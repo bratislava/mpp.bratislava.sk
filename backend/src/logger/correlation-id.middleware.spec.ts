@@ -1,8 +1,9 @@
 import { getLogger, type LogRecord, reset } from '@logtape/logtape'
 import type { NextFunction, Request, Response } from 'express'
+import { type Mock, vi } from 'vitest'
 
-import { correlationIdMiddleware, pickRequestId } from './correlation-id.middleware'
-import { configureTestLogging } from './test-sink'
+import { correlationIdMiddleware, pickRequestId } from './correlation-id.middleware.js'
+import { configureTestLogging } from './test-sink.js'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
@@ -44,13 +45,13 @@ describe('correlationIdMiddleware', () => {
   })
 
   function run(headers: Record<string, string>): {
-    setHeader: jest.Mock
+    setHeader: Mock
     next: NextFunction
   } {
-    const setHeader = jest.fn()
+    const setHeader = vi.fn()
     const req = { headers } as unknown as Request
     const res = { setHeader } as unknown as Response
-    const next = jest.fn(() => {
+    const next = vi.fn(() => {
       getLogger(['app', 'test']).info('inside request')
     })
     correlationIdMiddleware(req, res, next as NextFunction)

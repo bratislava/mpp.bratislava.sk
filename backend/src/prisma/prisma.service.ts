@@ -3,11 +3,11 @@ import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
-import type { EnvConfig } from 'src/config/configuration'
-import { PrismaClient } from 'src/generated/prisma/client'
-import { escapeMessageTemplate } from 'src/logger/logtape.config'
 
-import { prismaEventToLog, type PrismaLogEvent } from './prisma-event-to-log'
+import type { EnvConfig } from '../config/configuration.js'
+import { PrismaClient } from '../generated/prisma/client.js'
+import { escapeMessageTemplate } from '../logger/logtape.config.js'
+import { prismaEventToLog, type PrismaLogEvent } from './prisma-event-to-log.js'
 
 const prismaLogger = getLogger(['app', 'prisma'])
 

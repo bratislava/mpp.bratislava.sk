@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common'
 
-import { AppError, UpstreamServiceError } from './errors'
+import { AppError, UpstreamServiceError } from './errors.js'
 
 describe('AppError', () => {
   it('stores status and details as public readonly fields', () => {

@@ -13,7 +13,7 @@ ENTRYPOINT [ "/sbin/tini", "--" ]
 
 FROM base AS build-base
 WORKDIR /build
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 COPY prisma ./prisma
 RUN npm ci --include=dev --frozen-lockfile \
  && npx prisma generate
@@ -34,11 +34,11 @@ RUN npm run typecheck \
  && npm run lint:ci \
  && npm run format:check
 
-# Unit tests (jest, *.spec.ts).
+# Unit tests (vitest, *.spec.ts).
 FROM ci-base AS test
 RUN npm run test
 
-# End-to-end tests (jest, *.e2e-spec.ts). The e2e suite mocks PrismaService, so
+# End-to-end tests (vitest, *.e2e-spec.ts). The e2e suite mocks PrismaService, so
 # DATABASE_URL only needs to be a valid URL; CI passes the Postgres service URL
 # via the build arg for forward compatibility.
 FROM ci-base AS e2e
@@ -63,6 +63,9 @@ COPY --chown=node:node --from=build /build/package.json /build/package-lock.json
 COPY --chown=node:node --from=build /build/node_modules ./node_modules
 COPY --chown=node:node --from=build /build/dist ./dist
 COPY --chown=node:node --from=build /build/prisma ./prisma
+# prisma.config.ts is the only place the datasource URL is defined (Prisma 7);
+# `prisma migrate deploy` in the CMD fails without it.
+COPY --chown=node:node --from=build /build/prisma.config.ts ./prisma.config.ts
 COPY --chown=node:node --from=build /build/src/generated ./src/generated
 COPY --chown=node:node nest-cli.json ./nest-cli.json
 EXPOSE 3000

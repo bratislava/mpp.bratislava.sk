@@ -1,12 +1,12 @@
 import { type LogRecord, reset } from '@logtape/logtape'
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import * as request from 'supertest'
+import request from 'supertest'
 
-import AppModule from '../src/app.module'
-import { setupApp } from '../src/logger/setup-app'
-import { configureTestLogging } from '../src/logger/test-sink'
-import PrismaService from '../src/prisma/prisma.service'
+import AppModule from '../src/app.module.js'
+import { setupApp } from '../src/logger/setup-app.js'
+import { configureTestLogging } from '../src/logger/test-sink.js'
+import PrismaService from '../src/prisma/prisma.service.js'
 
 describe('AppController (e2e)', () => {
   let app: INestApplication

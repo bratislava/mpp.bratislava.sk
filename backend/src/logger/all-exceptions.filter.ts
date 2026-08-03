@@ -1,10 +1,10 @@
 import { getLogger } from '@logtape/logtape'
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common'
 import type { Response } from 'express'
-import { AppError } from 'src/utils/errors'
 
-import { logError } from './log-error'
-import { escapeMessageTemplate } from './logtape.config'
+import { AppError } from '../utils/errors.js'
+import { logError } from './log-error.js'
+import { escapeMessageTemplate } from './logtape.config.js'
 
 const logger = getLogger(['app', 'error'])
 
@@ -16,7 +16,7 @@ function buildClientBody(exception: unknown, status: number): object {
       message: 'Internal server error',
     }
   }
-  // 4xx HttpException: object bodies pass through (preserves nestjs-zod
+  // 4xx HttpException: object bodies pass through (preserves standard-schema
   // field-level issues); string bodies — what HttpException(message, status)
   // produces — are normalized, never shipped raw.
   const body = (exception as HttpException).getResponse()

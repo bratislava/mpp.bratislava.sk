@@ -3,13 +3,12 @@ import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
-import { cleanupOpenApiDoc } from 'nestjs-zod'
-import { REQUEST_ID_HEADER } from 'src/logger/correlation-id.middleware'
-import { configureLogging } from 'src/logger/logtape.config'
-import { setupApp } from 'src/logger/setup-app'
 
-import AppModule from './app.module'
-import type { EnvConfig } from './config/configuration'
+import AppModule from './app.module.js'
+import type { EnvConfig } from './config/configuration.js'
+import { REQUEST_ID_HEADER } from './logger/correlation-id.middleware.js'
+import { configureLogging } from './logger/logtape.config.js'
+import { setupApp } from './logger/setup-app.js'
 
 async function bootstrap(): Promise<void> {
   await configureLogging()
@@ -30,7 +29,6 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks()
   app.enableCors(corsOptions)
 
-  // Swagger setup with nestjs-zod cleanup
   const swaggerConfig = new DocumentBuilder()
     .setTitle('mpp-backend API')
     .setDescription('mpp.bratislava.sk backend API')
@@ -47,7 +45,7 @@ async function bootstrap(): Promise<void> {
     .build()
 
   const document = SwaggerModule.createDocument(app, swaggerConfig)
-  SwaggerModule.setup('api', app, cleanupOpenApiDoc(document))
+  SwaggerModule.setup('api', app, document)
 
   await app.listen(port)
   getLogger(['app']).info(`mpp-backend is running on port: ${port}`)
