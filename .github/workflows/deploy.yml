@@ -1,8 +1,3 @@
-# TODO: deploys will fail until a terragrunt deployment module is prepared
-# in bratislava/infrastructure-deployment-configuration under
-# clusters/<cluster>/applications/mpp/<service> for each service on each
-# target cluster, and the INFRA_DEPLOY_PAT secret + development/staging/
-# production environments are configured.
 name: Deploy pipeline
 on:
   push:
@@ -124,20 +119,18 @@ jobs:
     name: backend
     needs: [resolve, build-backend, build-frontend]
     if: ${{ !failure() && !cancelled() && needs.resolve.outputs.backend == 'true' }}
-    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@beta
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.0
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
       app: mpp.bratislava.sk/backend
-      dispatch_ref: mpinter/mpp-bratislava-sk-app
 
   deploy-frontend:
     name: frontend
     needs: [resolve, build-frontend, deploy-backend]
     if: ${{ !failure() && !cancelled() && needs.resolve.outputs.frontend == 'true' }}
-    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@beta
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.0
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
       app: mpp.bratislava.sk/frontend
-      dispatch_ref: mpinter/mpp-bratislava-sk-app
