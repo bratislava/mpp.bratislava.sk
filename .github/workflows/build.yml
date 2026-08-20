@@ -29,4 +29,3 @@ jobs:
     with:
       directory: frontend/
       image: harbor.bratislava.sk/portfolio/mpp-frontend
-      build_env: staging

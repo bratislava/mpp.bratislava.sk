@@ -27,4 +27,4 @@ Requires Node.js 26.x and npm.
 
 ## Build & Deploy
 
-The [`Dockerfile`](./Dockerfile) provides the `lint` CI stage and the `prod` runtime image (Next.js standalone). Deploys are driven by the GitHub workflows in [`../.github/workflows`](../.github/workflows); the environment is baked into the build from `.env.bratiska-cli-build.<env>` (copied to `.env.production.local` by the pipeline).
+The [`Dockerfile`](./Dockerfile) provides the `lint` CI stage and the `prod` runtime image (Next.js standalone). Deploys are driven by the GitHub workflows in [`../.github/workflows`](../.github/workflows); the environment is baked into the build from `.env.build.<cluster>` (copied to `.env.production.local` by the pipeline).
