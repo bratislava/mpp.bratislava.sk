@@ -25,12 +25,33 @@ Push to `master` deploys the whole project to **staging**. Deploy a specific env
 - `dev`, `staging`, `prod` select the cluster; a `-backend` / `-frontend` suffix limits the deploy to one service (otherwise both deploy — including tags with an unknown/mistyped service suffix).
 - Examples: `staging1.0.0` (both, staging), `dev-backend1.0.0` (backend only, dev), `prod-frontend1.0.0` (frontend only, prod).
 
-#### How deploys work
+### How deploys work
 
-Build and deploy share one reusable workflow per service ([`build-backend.yml`](./.github/workflows/build-backend.yml), [`build-frontend.yml`](./.github/workflows/build-frontend.yml)). On a PR these run in build-only mode; in [`deploy.yml`](./.github/workflows/deploy.yml) they run in deploy mode (`cluster` set), which builds the service image (if an image for the current commit does not already exist in Harbor) and tags it `<cluster>-<short-sha>`. Once a service image is built, a matching `deploy-*` job calls the shared `trigger-infra-deploy.yml` workflow, which dispatches a deploy in [infrastructure-deployment-configuration](https://github.com/bratislava/infrastructure-deployment-configuration); that applies the Terragrunt module for the service (under `clusters/<cluster>/applications/mpp/<service>`) on the target cluster.
+[`deploy.yml`](./.github/workflows/deploy.yml) handles both tags and `master` pushes and
+fans out into the per-service build workflows
+([`build-backend.yml`](./.github/workflows/build-backend.yml),
+[`build-frontend.yml`](./.github/workflows/build-frontend.yml)). The overall pipeline and release rules are described in
+[Deployment and releases](https://magistratba.sharepoint.com/:fl:/r/contentstorage/CSP_e7fd7f53-9abe-456a-b0e1-7cc0c63e3f1a/Document%20Library/LoopAppData/Deployment%20%26%20releases.loop?d=we29942dcbfe34648a857e7d3bfb196cf&csf=1&web=1&e=MLf6C9&nav=cz0lMkZjb250ZW50c3RvcmFnZSUyRkNTUF9lN2ZkN2Y1My05YWJlLTQ1NmEtYjBlMS03Y2MwYzYzZTNmMWEmZD1iJTIxVTNfOTU3NmFha1d3NFh6QXhqNF9Hc3RnWmNMRlhXQkR2Z2F4bHUxdEdsNGZsSnk2d2ZCeFRvWi00aXZqZ0o4ayZmPTAxWVJNMktXRzRJS002Rlk1N0pCREtRVjdIMk83M0RGV1AmYz0lMkYmYT1Mb29wQXBwJnA9JTQwZmx1aWR4JTJGbG9vcC1wYWdlLWNvbnRhaW5lciZ4PSU3QiUyMnclMjIlM0ElMjJUMFJUVUh4dFlXZHBjM1J5WVhSaVlTNXphR0Z5WlhCdmFXNTBMbU52Ylh4aUlWVXpYemsxTnpaaFlXdFhkelJZZWtGNGFqUmZSM04wWjFwalRFWllWMEpFZG1kaGVHeDFNWFJIYkRSbWJFcDVObmRtUW5oVWIxb3ROR2wyYW1kS09HdDhNREZaVWsweVMxZERRMUUyTTB4Qk5VODBOMFpHVEVVMFIwNVFTbGRLUlVoYVVRJTNEJTNEJTIyJTJDJTIyaSUyMiUzQSUyMjU1NzQyNmM4LTBmYjMtNDVhYi1iYTg1LWQ0MzZkYzMyODU1MCUyMiU3RA%3D%3D). The frontend's build-time environment
+comes from the committed `frontend/.env.build.<cluster>` file, which is why it
+is rebuilt per cluster.
 
-The backend image is environment-agnostic, so a single per-commit build is reused across clusters. The Next.js frontend bakes its environment into the build (`frontend/.env.bratiska-cli-build.<env>`), so it is rebuilt (with a separate Docker cache and an `-<env>` tag suffix) for every cluster.
+The Terragrunt units live under `clusters/<cluster>/applications/mpp.bratislava.sk/<service>`
+in [infrastructure-deployment-configuration](https://github.com/bratislava/infrastructure-deployment-configuration)
+(clusters: `development`, `staging`, `production`). Shared actions come from
+[bratislava/github-actions](https://github.com/bratislava/github-actions), pinned at `@v3.0.0`.
 
-The build and deploy plumbing (Buildx setup, registry logins, Docker tag/cache metadata, image reuse checks, and the infrastructure deploy trigger) comes from shared actions in [bratislava/github-actions](https://github.com/bratislava/github-actions).
+### Environment variables and secrets
 
-> Note: deploys will fail until the Terragrunt modules exist under `clusters/<cluster>/applications/mpp/<service>` in `infrastructure-deployment-configuration`, and the `INFRA_DEPLOY_PAT` secret + `development`/`staging`/`production` environments are configured.
+See [Environment variables & secrets](https://magistratba.sharepoint.com/:fl:/r/contentstorage/CSP_e7fd7f53-9abe-456a-b0e1-7cc0c63e3f1a/Document%20Library/LoopAppData/Environment%20variables%20%26%20Secrets.loop?d=w77387c85f8b94b50a848ccc19d3c0972&csf=1&web=1&e=C9nE81&nav=cz0lMkZjb250ZW50c3RvcmFnZSUyRkNTUF9lN2ZkN2Y1My05YWJlLTQ1NmEtYjBlMS03Y2MwYzYzZTNmMWEmZD1iJTIxVTNfOTU3NmFha1d3NFh6QXhqNF9Hc3RnWmNMRlhXQkR2Z2F4bHUxdEdsNGZsSnk2d2ZCeFRvWi00aXZqZ0o4ayZmPTAxWVJNMktXRUZQUTRIUE9QWUtCRjJRU0dNWUdPVFlDTFMmYz0lMkYmYT1Mb29wQXBwJnA9JTQwZmx1aWR4JTJGbG9vcC1wYWdlLWNvbnRhaW5lciZ4PSU3QiUyMnclMjIlM0ElMjJUMFJUVUh4dFlXZHBjM1J5WVhSaVlTNXphR0Z5WlhCdmFXNTBMbU52Ylh4aUlWVXpYemsxTnpaaFlXdFhkelJZZWtGNGFqUmZSM04wWjFwalRFWllWMEpFZG1kaGVHeDFNWFJIYkRSbWJFcDVObmRtUW5oVWIxb3ROR2wyYW1kS09HdDhNREZaVWsweVMxZERRMUUyTTB4Qk5VODBOMFpHVEVVMFIwNVFTbGRLUlVoYVVRJTNEJTNEJTIyJTJDJTIyaSUyMiUzQSUyMmEzYTI0MjIxLTBkMmUtNGUyYi1iZWEyLTQ4OTBjZGUwYTdkYiUyMiU3RA%3D%3D) for the file format and how
+syncing works. Specific to this repo:
+
+- **Non-secret env vars** go in `<service>/.env.deploy.<cluster>`, e.g.
+  `backend/.env.deploy.staging` — they become the `mpp-backend-env` / `mpp-frontend-env`
+  config maps. They are distinct from `frontend/.env.build.<cluster>`, the
+  **build-time** config baked into the frontend image — changing that needs a new image,
+  not just a redeploy.
+- **mpp currently has no Passbolt-managed secrets.** The backend's PostgreSQL credentials
+  are generated by the CloudNativePG operator and mounted straight from the cluster
+  secret it creates, and the frontend has no secrets at all. Adding the first one
+  requires creating the `/kubernetes/mpp.bratislava.sk/` folder in Passbolt and the
+  ExternalSecret wiring in the infrastructure repo.

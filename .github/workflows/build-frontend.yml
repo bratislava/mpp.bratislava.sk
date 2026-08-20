@@ -7,8 +7,16 @@ name: Build Frontend
 #     separately by the caller (deploy.yml).
 #
 # Next.js bakes the environment into the build, so the image, tags and Docker
-# cache are environment-specific (the `-<build_env>` flavor suffix) and cannot
-# be reused across clusters.
+# cache are environment-specific (the `-<env>` flavor suffix) and cannot be
+# reused across clusters. The environment comes from the committed
+# frontend/.env.build.<cluster> file, copied to .env.production.local before
+# the image build.
+#
+# The environment name IS the cluster name (development, staging, production) —
+# there is no separate build-env input and no cluster->flavor mapping; the env
+# files are named after the clusters they serve. CI builds (no cluster) fall
+# back to the development file purely so a URL is baked in — that image is
+# never pushed.
 on:
   workflow_call:
     inputs:
@@ -18,10 +26,6 @@ on:
         required: true
       image:
         description: "Full image name including registry/repository."
-        type: string
-        required: true
-      build_env:
-        description: "Environment suffix for .env.bratiska-cli-build.<env> (dev, staging, prod)."
         type: string
         required: true
       cluster:
@@ -53,9 +57,12 @@ jobs:
     runs-on: bratislava
     env:
       # Per-cluster deploy tag prefix (empty in CI) and the per-environment
-      # flavor suffix that keeps each env's image and cache separate.
+      # flavor suffix that keeps each env's image and cache separate. Deploy
+      # mode uses the cluster name directly; CI builds (no cluster) fall back
+      # to development.
       CLUSTER_PREFIX: ${{ inputs.cluster != '' && format('{0}-', inputs.cluster) || '' }}
-      ENV_SUFFIX: -${{ inputs.build_env }}
+      ENV_NAME: ${{ inputs.cluster != '' && inputs.cluster || 'development' }}
+      ENV_SUFFIX: -${{ inputs.cluster != '' && inputs.cluster || 'development' }}
     defaults:
       run:
         working-directory: ${{ inputs.directory }}
@@ -72,18 +79,16 @@ jobs:
 
       - name: Prepare Next.js build env
         shell: bash
-        env:
-          BUILD_ENV: ${{ inputs.build_env }}
         run: |
-          case "$BUILD_ENV" in
-            dev|staging|prod) ;;
+          case "$ENV_NAME" in
+            development|staging|production) ;;
             *)
-              echo "::error::Unsupported build_env '$BUILD_ENV'. Allowed values: dev, staging, prod."
+              echo "::error::Unsupported environment '$ENV_NAME'. Allowed values: development, staging, production."
               exit 1
               ;;
           esac
 
-          source_env_file=".env.bratiska-cli-build.$BUILD_ENV"
+          source_env_file=".env.build.$ENV_NAME"
           if [[ ! -f "$source_env_file" ]]; then
             echo "::error file=$source_env_file::Missing $source_env_file in $PWD"
             exit 1
@@ -91,7 +96,7 @@ jobs:
           cp "$source_env_file" .env.production.local
 
       - name: Set up Docker build
-        uses: bratislava/github-actions/.github/actions/setup-docker-build@beta
+        uses: bratislava/github-actions/.github/actions/setup-docker-build@v3.0.0
         with:
           docker_registry_username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           docker_registry_password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
@@ -105,7 +110,7 @@ jobs:
       - name: Docker metadata (lint)
         if: ${{ inputs.cluster == '' }}
         id: meta-lint
-        uses: bratislava/github-actions/.github/actions/docker-metadata@beta
+        uses: bratislava/github-actions/.github/actions/docker-metadata@v3.0.0
         with:
           image: ${{ inputs.image }}
           suffix: -lint
@@ -121,7 +126,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: bratislava/github-actions/.github/actions/docker-metadata@beta
+        uses: bratislava/github-actions/.github/actions/docker-metadata@v3.0.0
         with:
           image: ${{ inputs.image }}
           prefix: ${{ env.CLUSTER_PREFIX }}
@@ -132,7 +137,7 @@ jobs:
       - name: Check for existing image
         if: ${{ inputs.cluster != '' }}
         id: existing
-        uses: bratislava/github-actions/.github/actions/check-existing-image@beta
+        uses: bratislava/github-actions/.github/actions/check-existing-image@v3.0.0
         with:
           existing_tag: ${{ inputs.image }}:${{ steps.sha.outputs.short_sha }}${{ env.ENV_SUFFIX }}
           new_tag: ${{ inputs.image }}:${{ env.CLUSTER_PREFIX }}${{ steps.sha.outputs.short_sha }}${{ env.ENV_SUFFIX }}

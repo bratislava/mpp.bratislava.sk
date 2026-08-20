@@ -99,7 +99,7 @@ jobs:
         run: echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker build
-        uses: bratislava/github-actions/.github/actions/setup-docker-build@beta
+        uses: bratislava/github-actions/.github/actions/setup-docker-build@v3.0.0
         with:
           docker_registry_username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           docker_registry_password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
@@ -114,7 +114,7 @@ jobs:
       # its cache is shared across clusters.
       - name: Docker metadata (test)
         id: meta-test
-        uses: bratislava/github-actions/.github/actions/docker-metadata@beta
+        uses: bratislava/github-actions/.github/actions/docker-metadata@v3.0.0
         with:
           image: ${{ inputs.image }}
           suffix: -test
@@ -122,7 +122,7 @@ jobs:
       - name: Docker metadata (lint)
         if: ${{ inputs.target_lint != '' }}
         id: meta-lint
-        uses: bratislava/github-actions/.github/actions/docker-metadata@beta
+        uses: bratislava/github-actions/.github/actions/docker-metadata@v3.0.0
         with:
           image: ${{ inputs.image }}
           suffix: -lint
@@ -130,7 +130,7 @@ jobs:
       - name: Docker metadata (e2e)
         if: ${{ inputs.target_e2e_test != '' }}
         id: meta-e2e
-        uses: bratislava/github-actions/.github/actions/docker-metadata@beta
+        uses: bratislava/github-actions/.github/actions/docker-metadata@v3.0.0
         with:
           image: ${{ inputs.image }}
           suffix: -e2e
@@ -139,7 +139,7 @@ jobs:
       - name: Docker metadata (deploy)
         if: ${{ inputs.cluster != '' }}
         id: meta-deploy
-        uses: bratislava/github-actions/.github/actions/docker-metadata@beta
+        uses: bratislava/github-actions/.github/actions/docker-metadata@v3.0.0
         with:
           image: ${{ inputs.image }}
           prefix: ${{ env.CLUSTER_PREFIX }}
@@ -177,7 +177,7 @@ jobs:
       - name: Check for existing image
         if: ${{ inputs.cluster != '' }}
         id: existing
-        uses: bratislava/github-actions/.github/actions/check-existing-image@beta
+        uses: bratislava/github-actions/.github/actions/check-existing-image@v3.0.0
         with:
           existing_tag: ${{ inputs.image }}:${{ steps.sha.outputs.short_sha }}
           new_tag: ${{ inputs.image }}:${{ env.CLUSTER_PREFIX }}${{ steps.sha.outputs.short_sha }}
