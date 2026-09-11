@@ -56,7 +56,7 @@
     "prettier": "^3.4.2",
     "supertest": "^7.0.0",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "find-my-way": "^9.7.0",
