@@ -43,6 +43,8 @@ explicitly (e.g. `schema.parse(result)`) to avoid leaking columns.
 - Node.js 26.x (see repo-root `.nvmrc`) and npm 12.x (`npm install -g npm@12`)
 - PostgreSQL database
 
+Dependency policy lives in [`.npmrc`](./.npmrc): `engine-strict` rejects other Node/npm majors, `save-exact` pins new dependencies to exact versions, and `min-release-age=7` makes npm skip package versions published in the last 7 days.
+
 ### Quick Run
 
 1. Copy `.env.example` to `.env`

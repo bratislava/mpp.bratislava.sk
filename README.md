@@ -5,7 +5,7 @@
 - **[backend](./backend)** — NestJS backend (`mpp-backend`): PostgreSQL, Prisma, Zod validation, structured LogTape logging. Bootstrapped from [bratislava/magproxy](https://github.com/bratislava/magproxy).
 - **[frontend](./frontend)** — Next.js (App Router) frontend (`mpp-frontend`) with Tailwind CSS and the shared [@bratislava/eslint-config-next](https://github.com/bratislava/eslint-config) lint setup.
 
-Both services use Node.js 26 and npm. See the README in each directory for setup instructions.
+Both services use Node.js 26 (repo-root `.nvmrc`) and npm 12; `package.json#engines` is enforced via `engine-strict` in each service's `.npmrc`, so `npm install` fails fast on older toolchains. See the README in each directory for setup instructions.
 
 ## CI / CD
 
@@ -15,7 +15,7 @@ GitHub Actions live in [`.github/workflows`](./.github/workflows) and cover both
 
 Every PR against `master` runs [`build.yml`](./.github/workflows/build.yml), which runs the dockerized checks (plus a no-push build of the frontend image):
 
-- **backend** — `lint` (TypeScript type-check + ESLint + Prettier), `test` (jest unit) and `e2e` (jest e2e) stages from [`backend/Dockerfile`](./backend/Dockerfile).
+- **backend** — `lint` (TypeScript type-check + ESLint + Prettier), `test` (Vitest unit) and `e2e` (Vitest e2e) stages from [`backend/Dockerfile`](./backend/Dockerfile).
 - **frontend** — `lint` (ESLint + Prettier) stage from [`frontend/Dockerfile`](./frontend/Dockerfile).
 
 ### Deploys
