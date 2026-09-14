@@ -10,7 +10,7 @@ Next.js (App Router) frontend for mpp.bratislava.sk.
 
 ## Getting Started
 
-Requires Node.js 26.x and npm.
+Requires Node.js 26.x and npm 12.x (`npm install -g npm@12`).
 
 1. Copy `.env.example` to `.env.local` and adjust as needed
 2. Install dependencies: `npm install`
