@@ -32,19 +32,15 @@ the OpenAPI decorators (zod v4 built-in, no extra deps):
 @ApiBody({ schema: z.toJSONSchema(createThingSchema, { target: 'openapi-3.0' }) as SchemaObject })
 ```
 
-Note: removing nestjs-zod also removed its global response serializer
-(`ZodSerializerInterceptor`). Responses are no longer stripped to a schema shape —
-endpoints returning Prisma entities must shape their return values explicitly
-(e.g. `schema.parse(result)`) to avoid leaking columns.
-
-(nestjs-zod was removed — it does not support NestJS 12. Revisit if it gains
-v12 support or `@nestjs/swagger` learns to introspect standard schemas.)
+Note: there is no global response serializer. Responses are not stripped to a
+schema shape — endpoints returning Prisma entities must shape their return values
+explicitly (e.g. `schema.parse(result)`) to avoid leaking columns.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 26.x (use Volta for automatic version management)
+- Node.js 26.x (see repo-root `.nvmrc`) and npm 12.x (`npm install -g npm@12`)
 - PostgreSQL database
 
 ### Quick Run

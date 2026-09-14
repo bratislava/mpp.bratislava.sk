@@ -12,10 +12,13 @@ WORKDIR /home/node/app
 ENTRYPOINT [ "/sbin/tini", "--" ]
 
 FROM base AS build-base
+# npm 12 only where npm ci runs; runtime stages keep the stock npm (npm run ignores engines).
+RUN npm install -g npm@12.0.2
 WORKDIR /build
 COPY package.json package-lock.json .npmrc ./
 COPY prisma ./prisma
-RUN npm ci --include=dev --frozen-lockfile \
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --include=dev \
  && npx prisma generate
 
 # ---- CI check stages (dockerized lint / test / e2e) ----
@@ -50,10 +53,14 @@ RUN npm run test:e2e
 # own; it only feeds the `prod` COPYs below.
 FROM ci-base AS build
 RUN npm run build \
- && npm prune --production
+ && npm prune --omit=dev
 
 FROM app-base AS dev
 ENV NODE_ENV=development
+# dev-only: allow installs inside the container to pass the strict npm engine check
+USER root
+RUN npm install -g npm@12.0.2
+USER node
 # used **only** for development and local directory should be mounted
 CMD [ "npm", "run", "start:debug" ]
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Module, StandardSchemaValidationPipe } from '@nestjs/common'
+import { Module, StandardSchemaValidationPipe } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_PIPE } from '@nestjs/core'
 
@@ -16,24 +16,9 @@ import PrismaModule from './prisma/prisma.module.js'
   ],
   controllers: [AppController],
   // Validates any route param decorated with { schema: <zod/valibot/...> }.
-  // Custom exceptionFactory: the alpha.5 default drops issue paths (fixed
-  // upstream in nestjs/nest#17107) — keep field names in 400 bodies.
-  providers: [
-    {
-      provide: APP_PIPE,
-      useValue: new StandardSchemaValidationPipe({
-        exceptionFactory: (issues) =>
-          new BadRequestException(
-            issues.map((issue) => {
-              const path = (issue.path ?? [])
-                .map((segment) => String(typeof segment === 'object' ? segment.key : segment))
-                .join('.')
-              return path ? `${path}: ${issue.message}` : issue.message
-            }),
-          ),
-      }),
-    },
-  ],
+  // Default exceptionFactory prefixes issue paths as "a.b.0: message" (zod emits plain
+  // PropertyKey segments; object `{ key }` segments are not unwrapped upstream).
+  providers: [{ provide: APP_PIPE, useClass: StandardSchemaValidationPipe }],
   exports: [],
 })
 export default class AppModule {}
