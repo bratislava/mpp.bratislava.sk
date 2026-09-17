@@ -21,7 +21,7 @@ on:
         type: string
         required: true
       build_env:
-        description: "Environment suffix for .env.bratiska-cli-build.<env> (dev, staging, prod)."
+        description: "Environment suffix for .env.build.<env> (dev, staging, prod)."
         type: string
         required: true
       cluster:
@@ -83,7 +83,7 @@ jobs:
               ;;
           esac
 
-          source_env_file=".env.bratiska-cli-build.$BUILD_ENV"
+          source_env_file=".env.build.$BUILD_ENV"
           if [[ ! -f "$source_env_file" ]]; then
             echo "::error file=$source_env_file::Missing $source_env_file in $PWD"
             exit 1

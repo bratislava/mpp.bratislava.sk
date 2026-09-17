@@ -1,8 +1,9 @@
-# TODO: deploys will fail until a terragrunt deployment module is prepared
-# in bratislava/infrastructure-deployment-configuration under
-# clusters/<cluster>/applications/mpp/<service> for each service on each
-# target cluster, and the INFRA_DEPLOY_PAT secret + development/staging/
-# production environments are configured.
+# The terragrunt units live in bratislava/infrastructure-deployment-configuration
+# under clusters/<cluster>/applications/mpp.bratislava.sk/<service> (PR #326):
+# development and staging are applied, production is not brought up yet.
+#
+# TODO: set dispatch_ref back to master (the default) once #326 merges -- it
+# currently points at that PR's branch, so deploys track unmerged infra.
 name: Deploy pipeline
 on:
   push:
@@ -85,6 +86,27 @@ jobs:
             else
               echo "$SVC=false" >> "$GITHUB_OUTPUT"
             fi
+          done
+
+      # build.yml's env-files job guards this on PRs, but a tag can point at any commit --
+      # including one from before these files existed. The infra repo reads
+      # <service>/.env.deploy.<cluster> at the deployed image's commit, so a missing file
+      # here is a failed terragrunt apply, not a failed build.
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Deploy env files exist at this commit
+        env:
+          CLUSTER: ${{ steps.resolve.outputs.cluster }}
+        run: |
+          for f in "backend/.env.deploy.$CLUSTER" "frontend/.env.deploy.$CLUSTER"; do
+            test -s "$f" || {
+              echo "::error file=$f::$f is missing or empty at ${GITHUB_SHA:0:7}; the infra deploy reads it and will fail"
+              exit 1
+            }
           done
 
   # ---- Build & push per-cluster service images ----

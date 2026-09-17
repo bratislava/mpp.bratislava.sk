@@ -9,6 +9,8 @@ describe('AppController (e2e)', () => {
   let app: INestApplication
 
   beforeEach(async () => {
+    // Deliberately the counterpart to logging.e2e-spec.ts, which boots under 'production':
+    // between them both accepted NODE_ENV values are exercised.
     process.env.NODE_ENV = 'development'
     process.env.DATABASE_URL ??= 'postgresql://test:test@localhost:5432/test'
 

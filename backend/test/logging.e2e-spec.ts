@@ -58,7 +58,9 @@ describe('Logging (e2e)', () => {
   const records = logger.records
 
   beforeAll(async () => {
-    process.env.NODE_ENV = 'development'
+    // Every cluster runs NODE_ENV=production (backend/.env.deploy.*), so boot under it here.
+    // The logger's JSON mode is pinned by CapturingLogger, not by NODE_ENV.
+    process.env.NODE_ENV = 'production'
     process.env.DATABASE_URL ??= 'postgresql://test:test@localhost:5432/test'
 
     const moduleFixture: TestingModule = await Test.createTestingModule({

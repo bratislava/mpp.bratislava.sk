@@ -33,7 +33,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
-!.env.bratiska-cli-build.*
+!.env.build.*
+# Read from this repo at deploy time by the infra repo (see the .env.deploy.* headers).
+!.env.deploy.*
+# Re-deny every local override, so neither negation above can un-ignore a real secret
+# (Dockerfile COPYs .env.*.local into the image).
+.env*.local
 
 # vercel
 .vercel

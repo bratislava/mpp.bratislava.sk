@@ -1,6 +1,12 @@
 # Conductor workspace context
 .context/
 
+# env files: nothing at the repo root is meant to be committed. Per-service rules live in
+# backend/.gitignore and frontend/.gitignore, which allow their .env.deploy.* / .env.build.*.
+.env*
+!.env.example
+.env*.local
+
 # OS
 .DS_Store
 

@@ -6,12 +6,17 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 import AppModule from './app.module.js'
 import type { EnvConfig } from './config/configuration.js'
-import { REQUEST_ID_HEADER, RequestAwareLogger, requestLogger } from './logger/request-logger.js'
+import {
+  REQUEST_ID_HEADER,
+  RequestAwareLogger,
+  requestLogger,
+  shouldLogJson,
+} from './logger/request-logger.js'
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // JSON outside development: one record per event, stacks stay inside it.
-    logger: new RequestAwareLogger({ json: process.env.NODE_ENV !== 'development' }),
+    logger: new RequestAwareLogger({ json: shouldLogJson() }),
   })
   app.use(requestLogger)
   const configService = app.get(ConfigService<EnvConfig, true>)

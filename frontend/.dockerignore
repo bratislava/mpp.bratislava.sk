@@ -5,6 +5,9 @@
 node_modules
 .next
 npm-debug.log
+# Matches only names ENDING in .env, so .env.deploy.* enters the build context. Harmless
+# (comments only, and Next.js never loads that filename), but see backend/.dockerignore --
+# tightening this to **/.env* there would break the backend test stage.
 **/*.env
 **/*.env.example
 .vscode

@@ -6,6 +6,8 @@
 dist
 node_modules
 npm-debug.log
+# Note: these match only names ENDING in .env, so .env.deploy.* stays in the context on
+# purpose — src/config/configuration.spec.ts reads those files in the `test` stage.
 **/*.env
 **/*.env.example
 **/*.env.test
@@ -15,7 +17,5 @@ misc
 .vscode
 **/*.bacpac
 **/*.csv
-# bratiska-cli manifest files
-manifest-*.y?ml
 *.pem
 *.md
