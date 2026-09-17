@@ -6,11 +6,6 @@ const EnvironmentSchema = z.object({
   NODE_ENV: NodeEnvSchema.default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.url(),
-  // Renders stack traces single-line until the Loki multiline stage is live.
-  // Read directly from process.env in logtape.config.ts (logging is configured
-  // before ConfigService exists); validated here for documentation and typing.
-  // Delete once the multiline stage is confirmed in production (see TODOS.md).
-  LOG_ESCAPE_NEWLINES: z.stringbool().default(false),
   // Logs every SQL statement at debug
   PRISMA_LOG_QUERIES: z.stringbool().default(false),
 })

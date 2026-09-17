@@ -30,8 +30,6 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
   },
   "dependencies": {
-    "@logtape/express": "2.3.2",
-    "@logtape/logtape": "2.3.2",
     "@nestjs/common": "12.0.1",
     "@nestjs/config": "12.0.0",
     "@nestjs/core": "12.0.1",

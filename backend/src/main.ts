@@ -1,4 +1,4 @@
-import { getLogger } from '@logtape/logtape'
+import { Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
@@ -6,14 +6,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 import AppModule from './app.module.js'
 import type { EnvConfig } from './config/configuration.js'
-import { REQUEST_ID_HEADER } from './logger/correlation-id.middleware.js'
-import { configureLogging } from './logger/logtape.config.js'
-import { setupApp } from './logger/setup-app.js'
+import { REQUEST_ID_HEADER, RequestAwareLogger, requestLogger } from './logger/request-logger.js'
 
 async function bootstrap(): Promise<void> {
-  await configureLogging()
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
-  setupApp(app)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    // JSON outside development: one record per event, stacks stay inside it.
+    logger: new RequestAwareLogger({ json: process.env.NODE_ENV !== 'development' }),
+  })
+  app.use(requestLogger)
   const configService = app.get(ConfigService<EnvConfig, true>)
   const port = configService.get('PORT', { infer: true })
 
@@ -48,7 +48,7 @@ async function bootstrap(): Promise<void> {
   SwaggerModule.setup('api', app, document)
 
   await app.listen(port)
-  getLogger(['app']).info(`mpp-backend is running on port: ${port}`)
+  new Logger('Bootstrap').log(`mpp-backend is running on port: ${port}`)
 }
 
 void bootstrap()

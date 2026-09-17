@@ -1,15 +1,13 @@
-import { getLogger } from '@logtape/logtape'
-import { Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
 import type { EnvConfig } from '../config/configuration.js'
 import { PrismaClient } from '../generated/prisma/client.js'
-import { escapeMessageTemplate } from '../logger/logtape.config.js'
 import { prismaEventToLog, type PrismaLogEvent } from './prisma-event-to-log.js'
 
-const prismaLogger = getLogger(['app', 'prisma'])
+const prismaLogger = new Logger('Prisma')
 
 type PrismaLogLevel = 'query' | 'warn' | 'error'
 
@@ -42,7 +40,7 @@ export default class PrismaService extends PrismaClient implements OnModuleInit 
     for (const level of logLevels) {
       on(level, (event) => {
         const mapped = prismaEventToLog(level, event)
-        prismaLogger[mapped.level](escapeMessageTemplate(mapped.message), mapped.properties)
+        prismaLogger[mapped.level](mapped.message, mapped.properties)
       })
     }
   }
