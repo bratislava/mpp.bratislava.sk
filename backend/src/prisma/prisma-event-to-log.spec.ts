@@ -14,8 +14,8 @@ describe('prismaEventToLog', () => {
     expect(JSON.stringify(mapped)).not.toContain('secret-personal-id')
   })
 
-  it('maps warn events to warning level', () => {
-    expect(prismaEventToLog('warn', { message: 'pool low' }).level).toBe('warning')
+  it('maps warn events to warn level', () => {
+    expect(prismaEventToLog('warn', { message: 'pool low' }).level).toBe('warn')
   })
 
   it('maps error events to error level', () => {

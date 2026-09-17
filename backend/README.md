@@ -36,6 +36,30 @@ Note: there is no global response serializer. Responses are not stripped to a
 schema shape — endpoints returning Prisma entities must shape their return values
 explicitly (e.g. `schema.parse(result)`) to avoid leaking columns.
 
+## Logging
+
+Stock NestJS `ConsoleLogger`, configured once in `main.ts`: JSON records outside
+`development`, colored text locally. Log from anywhere with
+`new Logger(MyService.name).log('msg', { key: value })` — plain objects after the
+message become structured params.
+
+- **Correlation:** `logger/request-logger.ts` picks a request id (`CF-Ray` from
+  Cloudflare, else a valid `x-request-id`, else a UUID), echoes it as the
+  `x-request-id` response header and stamps `requestId` onto every log line
+  written during that request, including Nest's own (`ExceptionsHandler`, …).
+- **Request line:** one `HTTP` record per request on finish, `GET /path 200`
+  with `durationMs`. `/healthcheck` is skipped.
+- **Errors:** unexpected throws are handled by Nest's default filter — logged
+  with stack under `ExceptionsHandler`, client gets a generic 500. Throw the
+  built-in `HttpException`s for expected 4xx; they are not logged separately
+  (the request line carries the status). For a 5xx that needs internal context,
+  use `new BadGatewayException('msg', { cause })` — `cause` never reaches the
+  client — and add a small `@Catch(HttpException)` filter extending
+  `BaseExceptionFilter` that logs `exception.cause` for status >= 500 when the
+  first such case appears.
+- **Prisma:** warn/error events are always logged; set `PRISMA_LOG_QUERIES=true`
+  to log every SQL statement at debug (placeholders only, never bound values).
+
 ## Getting Started
 
 ### Prerequisites
