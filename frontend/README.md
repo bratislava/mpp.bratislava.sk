@@ -43,5 +43,6 @@ Two different env files, for two different moments:
   them on every apply.
 
 **Non-secret values only** — this repo is public. `PORT` is Terraform's (it is tied to the unit's
-`internal_app_port`). The `env-files` job in `build.yml` guards that all six files are committed
-and non-empty.
+`internal_app_port`). The `env-files` job in `build.yml` guards that all six files are committed:
+the three `.env.deploy.*` non-empty, the three `.env.build.*` each defining `NEXT_PUBLIC_API_URL`
+(PR CI only builds the `staging` one, so the others get no other pre-merge check).

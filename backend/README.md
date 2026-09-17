@@ -110,7 +110,9 @@ Swagger documentation is available at `/api` when the application is running.
 - `npm run start:debug` - Start in debug mode
 - `npm run build` - Build for production
 - `npm run start:prod` - Start production build
-- `npm run lint` - Run ESLint
+- `npm run lint` - TypeScript type-check + ESLint (`lint:ci` is the ESLint-only half CI runs)
+- `npm run typecheck` - TypeScript type-check only
+- `npm run format` / `npm run format:check` - Prettier
 - `npm run test` - Run unit tests
 - `npm run test:e2e` - Run end-to-end tests
 
@@ -128,8 +130,9 @@ reads the file **at the commit the deployed image was built from** and merges it
   (which also drives the container port, service target port and readiness probe), and
   `DATABASE_URL` is composed from the CNPG secret. Setting either here would override Terraform.
 - **`NODE_ENV` is `production` in every cluster, including development and staging.** It selects
-  the runtime mode, not the environment; `development` is for running on your own machine. The
-  file value wins over the per-cluster value the infra unit sets inline.
+  the runtime mode, not the environment; `development` is for running on your own machine. Those
+  two are the only values the schema accepts — `staging` is rejected at boot. The file value wins
+  over the per-cluster value the infra unit sets inline.
 - One `KEY=VALUE` per line. Comments and blank lines are fine; a value cannot span lines, and a
   malformed line fails the deploy. `src/config/configuration.spec.ts` guards the shape, and the
   `env-files` job in `build.yml` guards that every file is committed and non-empty.

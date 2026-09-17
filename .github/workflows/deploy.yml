@@ -1,8 +1,9 @@
-# TODO: deploys will fail until a terragrunt deployment module is prepared
-# in bratislava/infrastructure-deployment-configuration under
-# clusters/<cluster>/applications/mpp/<service> for each service on each
-# target cluster, and the INFRA_DEPLOY_PAT secret + development/staging/
-# production environments are configured.
+# The terragrunt units live in bratislava/infrastructure-deployment-configuration
+# under clusters/<cluster>/applications/mpp.bratislava.sk/<service> (PR #326):
+# development and staging are applied, production is not brought up yet.
+#
+# TODO: set dispatch_ref back to master (the default) once #326 merges -- it
+# currently points at that PR's branch, so deploys track unmerged infra.
 name: Deploy pipeline
 on:
   push:
