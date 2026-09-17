@@ -29,7 +29,7 @@ Push to `master` deploys the whole project to **staging**. Deploy a specific env
 
 Build and deploy share one reusable workflow per service ([`build-backend.yml`](./.github/workflows/build-backend.yml), [`build-frontend.yml`](./.github/workflows/build-frontend.yml)). On a PR these run in build-only mode; in [`deploy.yml`](./.github/workflows/deploy.yml) they run in deploy mode (`cluster` set), which builds the service image (if an image for the current commit does not already exist in Harbor) and tags it `<cluster>-<short-sha>`. Once a service image is built, a matching `deploy-*` job calls the shared `trigger-infra-deploy.yml` workflow, which dispatches a deploy in [infrastructure-deployment-configuration](https://github.com/bratislava/infrastructure-deployment-configuration); that applies the Terragrunt module for the service (under `clusters/<cluster>/applications/mpp/<service>`) on the target cluster.
 
-The backend image is environment-agnostic, so a single per-commit build is reused across clusters. The Next.js frontend bakes its environment into the build (`frontend/.env.bratiska-cli-build.<env>`), so it is rebuilt (with a separate Docker cache and an `-<env>` tag suffix) for every cluster.
+The backend image is environment-agnostic, so a single per-commit build is reused across clusters. The Next.js frontend bakes its environment into the build (`frontend/.env.build.<env>`), so it is rebuilt (with a separate Docker cache and an `-<env>` tag suffix) for every cluster.
 
 The build and deploy plumbing (Buildx setup, registry logins, Docker tag/cache metadata, image reuse checks, and the infrastructure deploy trigger) comes from shared actions in [bratislava/github-actions](https://github.com/bratislava/github-actions).
 
