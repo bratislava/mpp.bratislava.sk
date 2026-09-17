@@ -2,6 +2,11 @@ name: Build
 # Runs on every PR against master: dockerized validation, tests, lint and
 # format for both services, plus a no-push build of the frontend image. The
 # same reusable workflows run in deploy mode (cluster set) from deploy.yml.
+#
+# Dependabot PRs wait for a manual approval on the `dependabot` environment
+# (required reviewers) before anything builds: every build pushes a
+# per-branch layer cache to Harbor, and unattended Dependabot PRs filled the
+# Harbor namespace. Same pattern as konto.bratislava.sk.
 on:
   pull_request:
     branches:
@@ -11,7 +16,17 @@ permissions:
   contents: read
 
 jobs:
+  dependabot-approval:
+    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    environment: dependabot
+    steps:
+      - name: Wait for approval
+        run: echo "Approved to run CI for Dependabot PR"
+
   build-backend:
+    if: always() && (needs.dependabot-approval.result == 'success' || needs.dependabot-approval.result == 'skipped')
+    needs: [dependabot-approval]
     name: Backend Build
     uses: ./.github/workflows/build-backend.yml
     secrets: inherit
@@ -23,6 +38,8 @@ jobs:
       target_e2e_test: e2e
 
   build-frontend:
+    if: always() && (needs.dependabot-approval.result == 'success' || needs.dependabot-approval.result == 'skipped')
+    needs: [dependabot-approval]
     name: Frontend Build
     uses: ./.github/workflows/build-frontend.yml
     secrets: inherit
