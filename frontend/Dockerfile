@@ -1,10 +1,12 @@
 FROM node:26-alpine AS base
 
 FROM base AS build-base
+# npm 12 only where npm ci runs; runtime stages keep the stock npm.
+RUN npm install -g npm@12.0.2
 WORKDIR /build
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --include=dev --frozen-lockfile
+    npm ci --include=dev
 
 FROM build-base AS build
 COPY . ./
@@ -41,6 +43,10 @@ ENTRYPOINT [ "/sbin/tini", "--" ]
 
 FROM app-base AS dev
 ENV NODE_ENV=development
+# dev-only: allow installs inside the container to pass the strict npm engine check
+USER root
+RUN npm install -g npm@12.0.2
+USER node
 COPY --chown=node:node --from=build-base /build/node_modules ./node_modules
 CMD [ "npm", "run", "dev" ]
 
