@@ -24,9 +24,40 @@ jobs:
       - name: Wait for approval
         run: echo "Approved to run CI for Dependabot PR"
 
-  build-backend:
+  # The infra repo reads .env.deploy.<cluster> from this repo on every apply, and
+  # build-frontend.yml reads .env.build.<env> at build time. PR CI only ever builds
+  # build_env: staging, so without this the other env files have no pre-merge guard at
+  # all -- a missing or untracked one surfaces as a failed Terraform apply in a cluster.
+  env-files:
     if: always() && (needs.dependabot-approval.result == 'success' || needs.dependabot-approval.result == 'skipped')
     needs: [dependabot-approval]
+    name: Env Files
+    runs-on: bratislava
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      # The cluster list is duplicated in deploy.yml's `resolve` case statement and in
+      # backend/src/config/configuration.spec.ts -- keep all three in step when it changes.
+      - name: Every deploy and build env file is committed and non-empty
+        run: |
+          for c in development staging production; do
+            for f in "backend/.env.deploy.$c" "frontend/.env.deploy.$c"; do
+              git ls-files --error-unmatch "$f"
+              test -s "$f" || { echo "::error file=$f::$f is empty"; exit 1; }
+            done
+          done
+          # Next bakes this in at build time, and PR CI only ever builds build_env: staging,
+          # so assert the value is actually there rather than just the file.
+          for e in dev staging prod; do
+            f="frontend/.env.build.$e"
+            git ls-files --error-unmatch "$f"
+            grep -q '^NEXT_PUBLIC_API_URL=.' "$f" || { echo "::error file=$f::missing NEXT_PUBLIC_API_URL"; exit 1; }
+          done
+
+  build-backend:
+    if: always() && (needs.dependabot-approval.result == 'success' || needs.dependabot-approval.result == 'skipped') && needs.env-files.result == 'success'
+    needs: [dependabot-approval, env-files]
     name: Backend Build
     uses: ./.github/workflows/build-backend.yml
     secrets: inherit
@@ -38,8 +69,8 @@ jobs:
       target_e2e_test: e2e
 
   build-frontend:
-    if: always() && (needs.dependabot-approval.result == 'success' || needs.dependabot-approval.result == 'skipped')
-    needs: [dependabot-approval]
+    if: always() && (needs.dependabot-approval.result == 'success' || needs.dependabot-approval.result == 'skipped') && needs.env-files.result == 'success'
+    needs: [dependabot-approval, env-files]
     name: Frontend Build
     uses: ./.github/workflows/build-frontend.yml
     secrets: inherit

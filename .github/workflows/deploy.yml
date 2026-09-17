@@ -87,6 +87,27 @@ jobs:
             fi
           done
 
+      # build.yml's env-files job guards this on PRs, but a tag can point at any commit --
+      # including one from before these files existed. The infra repo reads
+      # <service>/.env.deploy.<cluster> at the deployed image's commit, so a missing file
+      # here is a failed terragrunt apply, not a failed build.
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Deploy env files exist at this commit
+        env:
+          CLUSTER: ${{ steps.resolve.outputs.cluster }}
+        run: |
+          for f in "backend/.env.deploy.$CLUSTER" "frontend/.env.deploy.$CLUSTER"; do
+            test -s "$f" || {
+              echo "::error file=$f::$f is missing or empty at ${GITHUB_SHA:0:7}; the infra deploy reads it and will fail"
+              exit 1
+            }
+          done
+
   # ---- Build & push per-cluster service images ----
   # Each build job builds the deployable image, pushes it, and re-tags it for
   # the cluster. The matching deploy-* job below then triggers the infra deploy.

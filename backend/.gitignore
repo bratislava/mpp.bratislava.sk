@@ -36,7 +36,14 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-.env
+
+# env files: deny by default, allow only the ones meant to be committed. The deploy files
+# are read from this repo at deploy time, so .env.* is now a tracked shape in this dir --
+# a bare `.env` rule would leave .env.local / .env.production.local stageable.
+.env*
+!.env.example
+!.env.deploy.*
+.env*.local
 
 # Local docker-compose postgres volume
 postgres/
