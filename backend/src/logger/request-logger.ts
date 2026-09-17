@@ -13,6 +13,15 @@ const REQUEST_ID_PATTERN = /^[\w-]{1,64}$/
 
 const requestContext = new AsyncLocalStorage<{ requestId: string }>()
 
+/**
+ * JSON logs everywhere but a developer's own machine. Reads the raw variable rather than the
+ * parsed config because the logger is constructed before the Nest container exists. Exported
+ * so main.ts and its test share one definition instead of two copies that can drift.
+ */
+export function shouldLogJson(): boolean {
+  return process.env.NODE_ENV !== 'development'
+}
+
 // Nest's Logger facade delegates to whatever instance main.ts passed as
 // `logger` (the RequestAwareLogger below in prod, a capturing logger in e2e).
 // Never instantiate RequestAwareLogger here — that would be a second logger.
