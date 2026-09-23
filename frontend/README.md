@@ -27,13 +27,13 @@ Requires Node.js 26.x (see repo-root `.nvmrc`) and npm 12.x (`npm install -g npm
 
 ## Build & Deploy
 
-The [`Dockerfile`](./Dockerfile) provides the `lint` CI stage and the `prod` runtime image (Next.js standalone). Deploys are driven by the GitHub workflows in [`../.github/workflows`](../.github/workflows); the environment is baked into the build from `.env.build.<env>` (copied to `.env.production.local` by the pipeline).
+The [`Dockerfile`](./Dockerfile) provides the `lint` CI stage and the `prod` runtime image (Next.js standalone). Deploys are driven by the GitHub workflows in [`../.github/workflows`](../.github/workflows); the environment is baked into the build from `.env.build.<cluster>` (copied to `.env.production.local` by the pipeline).
 
 ## Deploy-time env
 
 Two different env files, for two different moments:
 
-- **`.env.build.<dev|staging|prod>`** — build time. Next.js bakes these into the bundle, so the
+- **`.env.build.<development|staging|production>`** — build time. Next.js bakes these into the bundle, so the
   pipeline copies the right one to `.env.production.local` before `npm run build`, and images are
   per-environment. `NEXT_PUBLIC_API_URL` lives here.
 - **`.env.deploy.<development|staging|production>`** — deploy time. The infra repo
@@ -45,4 +45,4 @@ Two different env files, for two different moments:
 **Non-secret values only** — this repo is public. `PORT` is Terraform's (it is tied to the unit's
 `internal_app_port`). The `env-files` job in `build.yml` guards that all six files are committed:
 the three `.env.deploy.*` non-empty, the three `.env.build.*` each defining `NEXT_PUBLIC_API_URL`
-(PR CI only builds the `staging` one, so the others get no other pre-merge check).
+(PR CI only builds the `development` one, so the others get no other pre-merge check).
