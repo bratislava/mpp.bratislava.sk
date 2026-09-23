@@ -25,8 +25,8 @@ jobs:
         run: echo "Approved to run CI for Dependabot PR"
 
   # The infra repo reads .env.deploy.<cluster> from this repo on every apply, and
-  # build-frontend.yml reads .env.build.<env> at build time. PR CI only ever builds
-  # build_env: staging, so without this the other env files have no pre-merge guard at
+  # build-frontend.yml reads .env.build.<cluster> at build time. PR CI only ever builds
+  # the development one, so without this the other env files have no pre-merge guard at
   # all -- a missing or untracked one surfaces as a failed Terraform apply in a cluster.
   env-files:
     if: always() && (needs.dependabot-approval.result == 'success' || needs.dependabot-approval.result == 'skipped')
@@ -47,10 +47,10 @@ jobs:
               test -s "$f" || { echo "::error file=$f::$f is empty"; exit 1; }
             done
           done
-          # Next bakes this in at build time, and PR CI only ever builds build_env: staging,
-          # so assert the value is actually there rather than just the file.
-          for e in dev staging prod; do
-            f="frontend/.env.build.$e"
+          # Next bakes this in at build time, and PR CI only ever builds the development
+          # one, so assert the value is actually there rather than just the file.
+          for c in development staging production; do
+            f="frontend/.env.build.$c"
             git ls-files --error-unmatch "$f"
             grep -q '^NEXT_PUBLIC_API_URL=.' "$f" || { echo "::error file=$f::missing NEXT_PUBLIC_API_URL"; exit 1; }
           done
@@ -77,4 +77,3 @@ jobs:
     with:
       directory: frontend/
       image: harbor.bratislava.sk/portfolio/mpp-frontend
-      build_env: staging
