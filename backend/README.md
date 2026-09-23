@@ -116,7 +116,9 @@ Dependency policy lives in [`.npmrc`](./.npmrc): `engine-strict` rejects other N
 
 ## API Documentation
 
-Swagger documentation is available at `/api` when the application is running.
+Swagger documentation is available at `/api` when the application is running
+(locally `http://localhost:3001/api`; `PORT` in `.env.example` and `docker-compose.yml` is 3001
+so the frontend dev server can keep 3000).
 
 ## Scripts
 
