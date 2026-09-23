@@ -159,6 +159,13 @@ describe('configuration() ENTRA_*', () => {
   it('rejects a non-GUID tenant id, which would otherwise build a bogus JWKS URL', () => {
     expect(failureFor({ ENTRA_TENANT_ID: 'bratislava.sk' })).toContain('- ENTRA_TENANT_ID:')
   })
+
+  it('rejects a non-GUID client id and lets a valid override replace the defaults', () => {
+    expect(failureFor({ ENTRA_CLIENT_ID: 'mpp' })).toContain('- ENTRA_CLIENT_ID:')
+    const override = '00000000-0000-4000-8000-000000000000'
+    const config = load({ ENTRA_TENANT_ID: override, ENTRA_CLIENT_ID: override })
+    expect([config.ENTRA_TENANT_ID, config.ENTRA_CLIENT_ID]).toEqual([override, override])
+  })
 })
 
 describe('configuration() validation failure', () => {

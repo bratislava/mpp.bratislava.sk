@@ -10,12 +10,12 @@ services:
     env_file:
       - .env
     environment:
-      PORT: 3000
+      PORT: 3001
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/mpp?schema=public&connect_timeout=3
       DEBUG_HOST: 0.0.0.0:9229
     command: npm run start:dbpush:debug
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3001:3001"
       - "127.0.0.1:9229:9229"
     volumes:
       - ./:/home/node/app

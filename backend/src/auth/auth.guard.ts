@@ -5,12 +5,14 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Reflector } from '@nestjs/core'
 import type { Request } from 'express'
-import { createRemoteJWKSet, type JWTPayload, jwtVerify, type JWTVerifyGetKey } from 'jose'
+import { createRemoteJWKSet, errors, type JWTPayload, jwtVerify, type JWTVerifyGetKey } from 'jose'
 
 import type { EnvConfig } from '../config/configuration.js'
 
@@ -19,6 +21,9 @@ export const API_SCOPE = 'access_as_user'
 export type EntraUser = JWTPayload & {
   name?: string
   oid?: string
+  // Client app the token was issued to: azp in v2 tokens, appid in v1.
+  azp?: string
+  appid?: string
   scp?: string
   roles?: string[]
 }
@@ -57,6 +62,10 @@ export const entraJwksProvider = {
  */
 @Injectable()
 export default class AuthGuard implements CanActivate {
+  private readonly logger = new Logger(AuthGuard.name)
+
+  private readonly clientId: string
+
   private readonly issuer: string[]
 
   private readonly audience: string[]
@@ -68,6 +77,7 @@ export default class AuthGuard implements CanActivate {
   ) {
     const tenantId = config.get('ENTRA_TENANT_ID', { infer: true })
     const clientId = config.get('ENTRA_CLIENT_ID', { infer: true })
+    this.clientId = clientId
     // v1 tokens (the default) vs v2 (manifest accessTokenAcceptedVersion: 2).
     this.issuer = [
       `https://sts.windows.net/${tenantId}/`,
@@ -84,8 +94,9 @@ export default class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<AuthedRequest>()
-    const [scheme, token] = request.headers.authorization?.split(' ') ?? []
-    if (scheme !== 'Bearer' || !token) {
+    // RFC 7235: the auth scheme is case-insensitive.
+    const token = /^Bearer\s+(\S+)$/i.exec(request.headers.authorization ?? '')?.[1]
+    if (!token) {
       throw new UnauthorizedException('Missing bearer token')
     }
 
@@ -95,18 +106,30 @@ export default class AuthGuard implements CanActivate {
         issuer: this.issuer,
         audience: this.audience,
         algorithms: ['RS256'],
+        requiredClaims: ['exp'],
       }))
-    } catch {
-      throw new UnauthorizedException('Invalid token')
+    } catch (error) {
+      // Signing keys unreachable (network, timeout) is our outage, not a bad token.
+      if (!(error instanceof errors.JOSEError) || error instanceof errors.JWKSTimeout) {
+        this.logger.error('Cannot fetch Entra signing keys', { error: String(error) })
+        throw new ServiceUnavailableException('Cannot verify tokens right now')
+      }
+      throw new UnauthorizedException(`Invalid token (${error.code})`)
     }
     // ID tokens share our aud/iss but carry no `scp`; only delegated access tokens do.
-    if (!user.scp?.split(' ').includes(API_SCOPE)) {
+    if (typeof user.scp !== 'string' || !user.scp.split(' ').includes(API_SCOPE)) {
       throw new UnauthorizedException(`Token lacks the ${API_SCOPE} scope`)
+    }
+    // Other apps in the tenant can be granted our scope too; only our own frontend may call.
+    // ponytail: single client; turn this into an allowlist when a second client app appears.
+    if ((user.azp ?? user.appid) !== this.clientId) {
+      throw new UnauthorizedException('Token was issued to a different client app')
     }
     request.user = user
 
     const roles = this.reflector.getAllAndOverride<string[] | undefined>(Roles.KEY, targets)
-    if (roles && !roles.some((role) => user.roles?.includes(role))) {
+    const userRoles = Array.isArray(user.roles) ? user.roles : []
+    if (roles && !roles.some((role) => userRoles.includes(role))) {
       throw new ForbiddenException(`Requires one of the roles: ${roles.join(', ')}`)
     }
     return true

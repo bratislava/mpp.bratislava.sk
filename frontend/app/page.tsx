@@ -68,6 +68,7 @@ const LoginScreen = () => {
 const TokenPage = ({ account }: { account: AccountInfo }) => {
   const { instance } = useMsal()
   const [token, setToken] = useState<string>()
+  const [tokenError, setTokenError] = useState<string>()
   const [results, setResults] = useState<Partial<Record<MockEndpoint, string>>>({})
 
   // Cached until close to expiry; MSAL refreshes it silently, else we re-run the redirect.
@@ -75,18 +76,21 @@ const TokenPage = ({ account }: { account: AccountInfo }) => {
     try {
       const { accessToken } = await instance.acquireTokenSilent({ scopes: API_SCOPES, account })
       setToken(accessToken)
+      setTokenError(undefined)
 
       return accessToken
     } catch (error) {
       if (error instanceof InteractionRequiredAuthError) {
         await instance.acquireTokenRedirect({ scopes: API_SCOPES, account })
       }
+      setTokenError(String(error))
       throw error
     }
   }, [instance, account])
 
   useEffect(() => {
-    void getToken()
+    // Failure is surfaced via tokenError.
+    getToken().catch(() => {})
   }, [getToken])
 
   const call = async (endpoint: MockEndpoint) => {
@@ -125,6 +129,7 @@ const TokenPage = ({ account }: { account: AccountInfo }) => {
           className="rounded-sm border p-2 font-mono text-xs"
         />
       </label>
+      {tokenError && <p className="text-red-700">Token error: {tokenError}</p>}
       <button
         type="button"
         className="self-start rounded-sm border px-4 py-2 hover:bg-gray-100"

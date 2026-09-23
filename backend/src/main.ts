@@ -49,6 +49,8 @@ async function bootstrap(): Promise<void> {
       bearerFormat: 'JWT',
       description: 'Entra ID access token (copy it from the frontend token page)',
     })
+    // Matches the global default-deny AuthGuard: every operation needs the token.
+    .addSecurityRequirements('bearer')
     .build()
 
   const document = SwaggerModule.createDocument(app, swaggerConfig)

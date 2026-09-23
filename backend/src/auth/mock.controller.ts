@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common'
 import {
-  ApiBearerAuth,
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
@@ -17,7 +16,7 @@ interface MockResponse {
   roles: string[]
 }
 
-const describe = (endpoint: string, user?: EntraUser): MockResponse => ({
+const toMockResponse = (endpoint: string, user?: EntraUser): MockResponse => ({
   endpoint,
   name: user?.name,
   oid: user?.oid,
@@ -27,14 +26,13 @@ const describe = (endpoint: string, user?: EntraUser): MockResponse => ({
 // ponytail: mock endpoints to exercise Entra auth end-to-end; delete once real endpoints exist.
 @Controller('mock')
 @ApiTags('mock')
-@ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Missing or invalid Entra access token' })
 export default class MockController {
   @ApiOperation({ summary: 'Any signed-in user of the organisation' })
   @ApiOkResponse()
   @Get('any')
   any(@CurrentUser() user?: EntraUser): MockResponse {
-    return describe('any', user)
+    return toMockResponse('any', user)
   }
 
   @ApiOperation({ summary: 'Role admin or process-partner' })
@@ -43,7 +41,7 @@ export default class MockController {
   @Roles(['admin', 'process-partner'])
   @Get('roles')
   roles(@CurrentUser() user?: EntraUser): MockResponse {
-    return describe('roles', user)
+    return toMockResponse('roles', user)
   }
 
   @ApiOperation({ summary: 'Role admin only' })
@@ -52,6 +50,6 @@ export default class MockController {
   @Roles(['admin'])
   @Get('admin')
   admin(@CurrentUser() user?: EntraUser): MockResponse {
-    return describe('admin', user)
+    return toMockResponse('admin', user)
   }
 }

@@ -41,8 +41,9 @@ explicitly (e.g. `schema.parse(result)`) to avoid leaking columns.
 Microsoft Entra ID, app registration `mpp.bratislava.sk` (tenant and client id default in
 `config/configuration.ts`, override with `ENTRA_TENANT_ID` / `ENTRA_CLIENT_ID`).
 `auth/auth.guard.ts` is a global, default-deny guard: every route needs an Entra access
-token for scope `api://<client id>/access_as_user` unless marked `@Public()`. Anyone in the
-tenant passes; `@Roles(['admin'])` additionally requires one of the listed app roles
+token for scope `api://<client id>/access_as_user`, issued to our own frontend (`azp` /
+`appid` = client id), unless marked `@Public()`. Unreachable Entra signing keys answer 503,
+not 401. Anyone in the tenant passes; `@Roles(['admin'])` additionally requires one of the listed app roles
 (`roles` claim). The verified payload is available via `@CurrentUser()`.
 
 To try it in Swagger (`/api`): sign in on the frontend, copy the access token from the home
