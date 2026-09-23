@@ -45,7 +45,9 @@ async function bootstrap(): Promise<void> {
     .addServer('https://mpp-backend.bratislava.sk/')
     .addBearerAuth({
       type: 'http',
-      description: 'Authentication token',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'Entra ID access token (copy it from the frontend token page)',
     })
     .build()
 

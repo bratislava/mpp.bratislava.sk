@@ -5,13 +5,20 @@ import { shouldLogJson } from '../logger/request-logger.js'
 import { configuration } from './configuration.js'
 
 const VALID_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/mpp?schema=public'
-const MANAGED_KEYS = ['NODE_ENV', 'PORT', 'DATABASE_URL', 'PRISMA_LOG_QUERIES']
+const MANAGED_KEYS = [
+  'NODE_ENV',
+  'PORT',
+  'DATABASE_URL',
+  'PRISMA_LOG_QUERIES',
+  'ENTRA_TENANT_ID',
+  'ENTRA_CLIENT_ID',
+]
 
 const ORIGINAL_ENV = process.env
 
 /**
  * configuration() reads process.env directly, so nothing is mocked: each case gets its own
- * copy of the environment with the four managed keys cleared (vitest exports NODE_ENV=test,
+ * copy of the environment with the managed keys cleared (vitest exports NODE_ENV=test,
  * and a dev shell may export PORT/DATABASE_URL), a valid DATABASE_URL, then its overrides.
  * An override value of undefined means "leave the variable unset".
  */
@@ -142,6 +149,18 @@ describe('configuration() PRISMA_LOG_QUERIES', () => {
   })
 })
 
+describe('configuration() ENTRA_*', () => {
+  it('defaults to the mpp.bratislava.sk app registration', () => {
+    const config = load()
+    expect(config.ENTRA_TENANT_ID).toBe('fe69e74e-1e66-4fcb-99c5-58e4a2d2a063')
+    expect(config.ENTRA_CLIENT_ID).toBe('d6588604-0ef7-46ae-8601-5e5c8ca49493')
+  })
+
+  it('rejects a non-GUID tenant id, which would otherwise build a bogus JWKS URL', () => {
+    expect(failureFor({ ENTRA_TENANT_ID: 'bratislava.sk' })).toContain('- ENTRA_TENANT_ID:')
+  })
+})
+
 describe('configuration() validation failure', () => {
   it('reports every issue on its own indented line', () => {
     const message = failureFor({ NODE_ENV: 'staging', PORT: '0', DATABASE_URL: 'nope' })
@@ -158,7 +177,7 @@ describe('configuration() validation failure', () => {
 
   // Scoped to configuration()'s return value on purpose: ConfigModule.forRoot sets no
   // skipProcessEnv, so ConfigService.get() still falls back to raw process.env.
-  it('returns only the four managed keys, dropping everything else in the environment', () => {
+  it('returns only the managed keys, dropping everything else in the environment', () => {
     applyEnv({ AWS_SECRET_ACCESS_KEY: 'super-secret', NODE_ENV: 'production' })
     const keys = Object.keys(configuration())
     expect(keys).toHaveLength(MANAGED_KEYS.length)

@@ -36,6 +36,19 @@ Note: there is no global response serializer. Responses are not stripped to a
 schema shape — endpoints returning Prisma entities must shape their return values
 explicitly (e.g. `schema.parse(result)`) to avoid leaking columns.
 
+## Authentication
+
+Microsoft Entra ID, app registration `mpp.bratislava.sk` (tenant and client id default in
+`config/configuration.ts`, override with `ENTRA_TENANT_ID` / `ENTRA_CLIENT_ID`).
+`auth/auth.guard.ts` is a global, default-deny guard: every route needs an Entra access
+token for scope `api://<client id>/access_as_user` unless marked `@Public()`. Anyone in the
+tenant passes; `@Roles(['admin'])` additionally requires one of the listed app roles
+(`roles` claim). The verified payload is available via `@CurrentUser()`.
+
+To try it in Swagger (`/api`): sign in on the frontend, copy the access token from the home
+page, click **Authorize** and paste it. `GET /mock/{any,roles,admin}` exercise the three
+access levels.
+
 ## Logging
 
 Stock NestJS `ConsoleLogger`, configured once in `main.ts`: JSON records outside
