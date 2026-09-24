@@ -13,7 +13,7 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/mpp?schema=public&connect_timeout=3
       DEBUG_HOST: 0.0.0.0:9229
-    command: npm run start:dbpush:debug
+    command: npm run start:migrate:debug
     ports:
       - "127.0.0.1:3001:3001"
       - "127.0.0.1:9229:9229"

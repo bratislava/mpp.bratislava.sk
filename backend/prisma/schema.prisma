@@ -9,4 +9,95 @@ datasource db {
   provider = "postgresql"
 }
 
-// Add your models here
+// Versioned entities: the head row (Project, ProjectRequest) holds identity and a pointer to
+// its current version. Version and child rows are append-only (DB triggers reject UPDATE and
+// DELETE, see the migration). New data fields go on the *Version model. Adding a child also
+// appends a parent version; a past state N shows the children with sinceVersion <= N.
+
+model Project {
+  id               String           @id @default(uuid(7)) @db.Uuid
+  createdAt        DateTime         @default(now())
+  // Null only inside the create transaction, between inserting the head and its v1.
+  currentVersionId String?          @unique @db.Uuid
+  currentVersion   ProjectVersion?  @relation("current", fields: [currentVersionId], references: [id])
+  versions         ProjectVersion[] @relation("history")
+  risks            ProjectRisk[]
+  reports          ProjectReport[]
+}
+
+model ProjectVersion {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  projectId String   @db.Uuid
+  project   Project  @relation("history", fields: [projectId], references: [id], onDelete: Restrict)
+  version   Int
+  createdAt DateTime @default(now())
+  // Entra oid of the user who made the change.
+  authorOid String
+  currentOf Project? @relation("current")
+
+  // Data fields
+  title String
+
+  @@unique([projectId, version])
+}
+
+model ProjectRisk {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  projectId    String   @db.Uuid
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  // First project version this risk is part of.
+  sinceVersion Int
+  createdAt    DateTime @default(now())
+  authorOid    String
+  text         String
+
+  @@index([projectId, sinceVersion])
+}
+
+model ProjectReport {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  projectId    String   @db.Uuid
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  sinceVersion Int
+  createdAt    DateTime @default(now())
+  authorOid    String
+  text         String
+
+  @@index([projectId, sinceVersion])
+}
+
+model ProjectRequest {
+  id               String                  @id @default(uuid(7)) @db.Uuid
+  createdAt        DateTime                @default(now())
+  currentVersionId String?                 @unique @db.Uuid
+  currentVersion   ProjectRequestVersion?  @relation("current", fields: [currentVersionId], references: [id])
+  versions         ProjectRequestVersion[] @relation("history")
+  comments         ProjectRequestComment[]
+}
+
+model ProjectRequestVersion {
+  id               String          @id @default(uuid(7)) @db.Uuid
+  projectRequestId String          @db.Uuid
+  projectRequest   ProjectRequest  @relation("history", fields: [projectRequestId], references: [id], onDelete: Restrict)
+  version          Int
+  createdAt        DateTime        @default(now())
+  authorOid        String
+  currentOf        ProjectRequest? @relation("current")
+
+  // Data fields
+  title String
+
+  @@unique([projectRequestId, version])
+}
+
+model ProjectRequestComment {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  projectRequestId String         @db.Uuid
+  projectRequest   ProjectRequest @relation(fields: [projectRequestId], references: [id], onDelete: Restrict)
+  sinceVersion     Int
+  createdAt        DateTime       @default(now())
+  authorOid        String
+  text             String
+
+  @@index([projectRequestId, sinceVersion])
+}

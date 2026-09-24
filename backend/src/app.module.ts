@@ -7,6 +7,8 @@ import AuthGuard, { entraJwksProvider } from './auth/auth.guard.js'
 import MockController from './auth/mock.controller.js'
 import { configuration } from './config/configuration.js'
 import PrismaModule from './prisma/prisma.module.js'
+import ProjectRequestsModule from './project-requests/project-requests.module.js'
+import ProjectsModule from './projects/projects.module.js'
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import PrismaModule from './prisma/prisma.module.js'
       isGlobal: true,
     }),
     PrismaModule,
+    ProjectsModule,
+    ProjectRequestsModule,
   ],
   controllers: [AppController, MockController],
   // Validates any route param decorated with { schema: <zod/valibot/...> }.

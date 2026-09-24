@@ -77,6 +77,37 @@ message become structured params.
 - **Prisma:** warn/error events are always logged; set `PRISMA_LOG_QUERIES=true`
   to log every SQL statement at debug (placeholders only, never bound values).
 
+## Versioned entities (Project, ProjectRequest)
+
+Projects and project requests are audited: no state is ever overwritten.
+
+- The head row (`Project`) holds only identity and `currentVersionId`.
+- Every change inserts a new `ProjectVersion` (`version` N+1) holding all data fields and the
+  author's Entra `oid`, then moves the head's pointer to it.
+- Child rows (`ProjectRisk`, `ProjectReport`, `ProjectRequestComment`) record `sinceVersion`,
+  the parent version that added them. Adding a child appends a parent version too, so version N
+  as it was = that `ProjectVersion` + the children with `sinceVersion <= N`.
+- Version and child tables are append-only: triggers in the migration reject `UPDATE` and
+  `DELETE`. Schema changes go through migrations (`prisma migrate dev`), never `db push`,
+  because `db push` would skip those triggers.
+- Races: `PATCH` carries `expectedVersion` (stale → 409). Two concurrent writers collide on
+  `@@unique([projectId, version])` and the loser gets a 409.
+
+To add a project field, add it to `ProjectVersion`. It is carried into every later version
+automatically (`dataOf` in the service). To add a new kind of child, copy `ProjectRisk`
+(`projectId` + `sinceVersion` + the append-only trigger).
+
+`GET /projects/:id/versions` and `GET /projects/:id/versions/:version` (and the same under
+`/project-requests`) are admin-only.
+
+`test/versioning.e2e-spec.ts` runs against a real database and is skipped unless `E2E_DB=true`:
+
+```bash
+docker compose up -d postgres
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/mpp npx prisma migrate deploy
+E2E_DB=true DATABASE_URL=postgresql://postgres:postgres@localhost:5433/mpp npm run test:e2e
+```
+
 ## Getting Started
 
 ### Prerequisites
@@ -91,7 +122,7 @@ Dependency policy lives in [`.npmrc`](./.npmrc): `engine-strict` rejects other N
 1. Copy `.env.example` to `.env`
 2. Run `docker compose up postgres` to start the PostgreSQL container
 3. Run `npm install` to install dependencies
-4. Run `npm run start:dbpush:debug` to start the app
+4. Run `npm run start:migrate:debug` to apply migrations and start the app
 
 ### Local Installation
 
