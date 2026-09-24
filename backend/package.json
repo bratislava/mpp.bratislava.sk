@@ -18,7 +18,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main.js",
     "start:migrate:prod": "prisma migrate deploy && npm run start:prod",
-    "start:dbpush:debug": "prisma db push && npm run start:debug",
+    "start:migrate:debug": "prisma migrate deploy && npm run start:debug",
     "lint": "tsc && eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:ci": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",

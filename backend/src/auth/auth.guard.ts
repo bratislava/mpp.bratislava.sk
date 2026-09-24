@@ -42,6 +42,15 @@ export const CurrentUser = createParamDecorator(
     context.switchToHttp().getRequest<AuthedRequest>().user,
 )
 
+/** The caller's Entra object id: the stable user id stored as authorOid on audited rows. */
+export const CurrentUserOid = createParamDecorator((_data: unknown, context: ExecutionContext): string => {
+  const oid = context.switchToHttp().getRequest<AuthedRequest>().user?.oid
+  if (!oid) {
+    throw new UnauthorizedException('Token has no oid claim')
+  }
+  return oid
+})
+
 export const ENTRA_JWKS = 'ENTRA_JWKS'
 
 // jose caches the key set and refetches it on an unknown `kid` (Entra key rollover).
