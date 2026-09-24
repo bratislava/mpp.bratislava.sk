@@ -5,6 +5,7 @@ import request from 'supertest'
 import { z } from 'zod'
 
 import AppModule from '../src/app.module.js'
+import { Public } from '../src/auth/auth.guard.js'
 import { requestLogger } from '../src/logger/request-logger.js'
 import PrismaService from '../src/prisma/prisma.service.js'
 import { type CapturedRecord, CapturingLogger } from './capturing-logger.js'
@@ -14,6 +15,8 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const createThingSchema = z.object({ name: z.string() })
 type CreateThing = z.infer<typeof createThingSchema>
 
+// Public: these cases exercise logging, not the default-deny AuthGuard.
+@Public()
 @Controller('test-logging')
 class TestLoggingController {
   private readonly logger = new Logger('TestService')

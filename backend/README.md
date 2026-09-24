@@ -36,6 +36,23 @@ Note: there is no global response serializer. Responses are not stripped to a
 schema shape — endpoints returning Prisma entities must shape their return values
 explicitly (e.g. `schema.parse(result)`) to avoid leaking columns.
 
+## Authentication
+
+Microsoft Entra ID, app registration `mpp.bratislava.sk` (tenant and client id default in
+`config/configuration.ts`, override with `ENTRA_TENANT_ID` / `ENTRA_CLIENT_ID`).
+`auth/auth.guard.ts` is a global, default-deny guard: every route needs an Entra access
+token for scope `api://<client id>/access_as_user`, issued to our own frontend (`azp` /
+`appid` = client id), unless marked `@Public()`. Unreachable Entra signing keys answer 503,
+not 401. Anyone in the tenant passes; `@Roles(['admin'])` additionally requires one of the listed app roles
+(`roles` claim). The verified payload is available via `@CurrentUser()`.
+
+"Anyone in the tenant" deliberately includes B2B guest accounts: they are treated like any
+employee without a role. Anything that must not reach every signed-in user needs `@Roles`.
+
+To try it in Swagger (`/api`): sign in on the frontend, copy the access token from the home
+page, click **Authorize** and paste it. `GET /mock/{any,roles,admin}` exercise the three
+access levels.
+
 ## Logging
 
 Stock NestJS `ConsoleLogger`, configured once in `main.ts`: JSON records outside
@@ -102,7 +119,9 @@ Dependency policy lives in [`.npmrc`](./.npmrc): `engine-strict` rejects other N
 
 ## API Documentation
 
-Swagger documentation is available at `/api` when the application is running.
+Swagger documentation is available at `/api` when the application is running
+(locally `http://localhost:3001/api`; `PORT` in `.env.example` and `docker-compose.yml` is 3001
+so the frontend dev server can keep 3000).
 
 ## Scripts
 

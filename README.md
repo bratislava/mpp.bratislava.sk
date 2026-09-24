@@ -2,10 +2,10 @@
 
 ## Structure
 
-- **[backend](./backend)** — NestJS backend (`mpp-backend`): PostgreSQL, Prisma, Zod validation, structured JSON logging with per-request correlation ids. Bootstrapped from [bratislava/magproxy](https://github.com/bratislava/magproxy).
-- **[frontend](./frontend)** — Next.js (App Router) frontend (`mpp-frontend`) with Tailwind CSS and the shared [@bratislava/eslint-config-next](https://github.com/bratislava/eslint-config) lint setup.
+- **[backend](./backend)** — NestJS backend (`mpp-backend`): PostgreSQL, Prisma, Zod validation, Microsoft Entra ID auth (global default-deny guard, app roles), structured JSON logging with per-request correlation ids. Bootstrapped from [bratislava/magproxy](https://github.com/bratislava/magproxy).
+- **[frontend](./frontend)** — Next.js (App Router) frontend (`mpp-frontend`) with Tailwind CSS, Microsoft sign-in via MSAL, and the shared [@bratislava/eslint-config-next](https://github.com/bratislava/eslint-config) lint setup.
 
-Both services use Node.js 26 (repo-root `.nvmrc`) and npm 12; `package.json#engines` is enforced via `engine-strict` in each service's `.npmrc`, so `npm install` fails fast on older toolchains. See the README in each directory for setup instructions.
+Both services use Node.js 26 (repo-root `.nvmrc`) and npm 12; `package.json#engines` is enforced via `engine-strict` in each service's `.npmrc`, so `npm install` fails fast on older toolchains. Locally the frontend runs on `http://localhost:3000` and the backend on `http://localhost:3001`. See the README in each directory for setup instructions.
 
 ## CI / CD
 

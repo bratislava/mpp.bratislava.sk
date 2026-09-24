@@ -14,7 +14,25 @@ Requires Node.js 26.x (see repo-root `.nvmrc`) and npm 12.x (`npm install -g npm
 
 1. Copy `.env.example` to `.env.local` and adjust as needed
 2. Install dependencies: `npm install`
-3. Run the dev server: `npm run dev`
+3. Run the dev server: `npm run dev` (`http://localhost:3000`; it calls the backend at `NEXT_PUBLIC_API_URL`, `http://localhost:3001` in `.env.example`)
+
+## Sign-in (Entra ID)
+
+Microsoft sign-in uses MSAL (`@azure/msal-browser` + `@azure/msal-react`) against the
+`mpp.bratislava.sk` app registration. Its tenant and client id are public identifiers shared by
+every cluster and live in [`app/page.tsx`](./app/page.tsx); the backend accepts the same
+registration (see [backend README](../backend/README.md#authentication)).
+
+- **Redirect bridge:** `redirectUri` is the relative `/auth`, resolved against the current origin.
+  [`app/auth/page.tsx`](./app/auth/page.tsx) is the bridge page MSAL v5 requires there; it hands
+  the auth response back to the page that started the login and stays outside `MsalProvider`.
+- **Register every origin:** each origin that serves the frontend (`http://localhost:3000` and
+  each cluster's frontend host) needs `<origin>/auth` added as a **Single-page application**
+  redirect URI on the app registration. Without it Entra rejects the login with a redirect URI
+  mismatch.
+- **Token test page:** the home page signs you in, shows the API access token (copy it into
+  Swagger **Authorize**) and calls the backend's `GET /mock/{any,roles,admin}` endpoints.
+  Tokens are cached in `sessionStorage`.
 
 ## Scripts
 
