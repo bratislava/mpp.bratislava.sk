@@ -46,6 +46,9 @@ token for scope `api://<client id>/access_as_user`, issued to our own frontend (
 not 401. Anyone in the tenant passes; `@Roles(['admin'])` additionally requires one of the listed app roles
 (`roles` claim). The verified payload is available via `@CurrentUser()`.
 
+"Anyone in the tenant" deliberately includes B2B guest accounts: they are treated like any
+employee without a role. Anything that must not reach every signed-in user needs `@Roles`.
+
 To try it in Swagger (`/api`): sign in on the frontend, copy the access token from the home
 page, click **Authorize** and paste it. `GET /mock/{any,roles,admin}` exercise the three
 access levels.
