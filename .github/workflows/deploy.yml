@@ -135,7 +135,7 @@ jobs:
     name: backend
     needs: [resolve, build-backend, build-frontend]
     if: ${{ !failure() && !cancelled() && needs.resolve.outputs.backend == 'true' }}
-    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.0
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.1
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
@@ -146,7 +146,7 @@ jobs:
     name: frontend
     needs: [resolve, build-frontend, deploy-backend]
     if: ${{ !failure() && !cancelled() && needs.resolve.outputs.frontend == 'true' }}
-    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.0
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.1
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
