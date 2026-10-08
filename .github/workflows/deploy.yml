@@ -83,7 +83,7 @@ jobs:
       # <service>/.env.deploy.<cluster> at the deployed image's commit, so a missing file
       # here is a failed terragrunt apply, not a failed build.
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           fetch-depth: 1
@@ -135,7 +135,7 @@ jobs:
     name: backend
     needs: [resolve, build-backend, build-frontend]
     if: ${{ !failure() && !cancelled() && needs.resolve.outputs.backend == 'true' }}
-    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.0
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.1
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
@@ -146,7 +146,7 @@ jobs:
     name: frontend
     needs: [resolve, build-frontend, deploy-backend]
     if: ${{ !failure() && !cancelled() && needs.resolve.outputs.frontend == 'true' }}
-    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.0
+    uses: bratislava/github-actions/.github/workflows/trigger-infra-deploy.yml@v3.0.1
     secrets: inherit
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
