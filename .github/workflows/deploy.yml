@@ -1,9 +1,5 @@
 # The terragrunt units live in bratislava/infrastructure-deployment-configuration
-# under clusters/<cluster>/applications/mpp.bratislava.sk/<service> (PR #326):
-# development and staging are applied, production is not brought up yet.
-#
-# TODO: set dispatch_ref back to master (the default) once #326 merges -- it
-# currently points at that PR's branch, so deploys track unmerged infra.
+# under clusters/<cluster>/applications/mpp.bratislava.sk/<service>.
 name: Deploy pipeline
 on:
   push:
@@ -140,7 +136,6 @@ jobs:
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
       app: mpp.bratislava.sk/backend
-      dispatch_ref: mpinter/mpp-bratislava-sk-app
 
   deploy-frontend:
     name: frontend
@@ -151,4 +146,3 @@ jobs:
     with:
       cluster: ${{ needs.resolve.outputs.cluster }}
       app: mpp.bratislava.sk/frontend
-      dispatch_ref: mpinter/mpp-bratislava-sk-app
