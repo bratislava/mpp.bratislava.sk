@@ -16,42 +16,40 @@ FROM base AS build-base
 RUN npm install -g npm@12.0.2
 WORKDIR /build
 COPY package.json package-lock.json .npmrc ./
-COPY prisma ./prisma
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --include=dev \
- && npx prisma generate
-
-# ---- CI check stages (dockerized lint / test / e2e) ----
-# Each extends build-base (dev deps installed) with the full source tree and a
-# freshly generated Prisma client. They are separate targets so CI builds them
-# in parallel and a failure points at the exact check that broke.
-FROM build-base AS ci-base
+    npm ci --include=dev
 ENV NODE_ENV=development
 COPY --chown=node:node . ./
+# After the source copy, so a local src/generated can't clobber the fresh client.
 RUN npx prisma generate
+
+# ---- CI check stages (dockerized lint / test / e2e) ----
+# Each extends build-base (dev deps, full source tree, generated Prisma client).
+# They are separate targets so CI builds them in parallel and a failure points
+# at the exact check that broke.
 
 # Type-check + ESLint + Prettier formatting check, one image. Any of the three
 # failing fails the stage.
-FROM ci-base AS lint
+FROM build-base AS lint
 RUN npm run typecheck \
  && npm run lint:ci \
  && npm run format:check
 
 # Unit tests (vitest, *.spec.ts).
-FROM ci-base AS test
+FROM build-base AS test
 RUN npm run test
 
 # End-to-end tests (vitest, *.e2e-spec.ts). The e2e suite mocks PrismaService, so
 # DATABASE_URL only needs to be a valid URL; CI passes the Postgres service URL
 # via the build arg for forward compatibility.
-FROM ci-base AS e2e
+FROM build-base AS e2e
 ARG CI_E2E_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mpp?schema=public"
 ENV DATABASE_URL=$CI_E2E_DATABASE_URL
 RUN npm run test:e2e
 
 # Compiled app + production-only node_modules. Not built as a target of its
 # own; it only feeds the `prod` COPYs below.
-FROM ci-base AS build
+FROM build-base AS build
 RUN npm run build \
  && npm prune --omit=dev
 

@@ -7,21 +7,15 @@ WORKDIR /build
 COPY package.json package-lock.json .npmrc ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --include=dev
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY . ./
 
 FROM build-base AS build
-COPY . ./
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # ---- CI check stages (dockerized lint / format) ----
-# Source tree with dev dependencies installed, but without the Next.js build,
-# so the lint and format checks run as fast standalone targets.
-FROM build-base AS ci-base
-ENV NEXT_TELEMETRY_DISABLED=1
-COPY . ./
-
 # ESLint + Prettier formatting check. Either failing fails the stage.
-FROM ci-base AS lint
+FROM build-base AS lint
 RUN npm run lint \
  && npm run format:check
 
