@@ -43,7 +43,7 @@
     "prisma": "7.10.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
-    "zod": "4.5.4"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@bratislava/eslint-config-nest": "0.7.1",
